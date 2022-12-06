@@ -16,6 +16,14 @@ as the one you are using in your decompiler.
 If you are using Ghidra, you may be required to enable the `$USER_HOME/ghidra_scripts` as a valid 
 scripts path. 
 
+### Manual Install
+If the above fails, you will need to manually install.
+To manually install, first `pip3 install -e .` on the repo, then copy the python file for your decompiler in your 
+decompilers plugins/scripts folder. 
+
+### Ghidra Gotchas
+You must have `python3` in your path for the Ghidra version to work. We quite literally call it from inside Python 2.
+
 ## Usage
 In your decompiler you can access the DAILA options in one of two ways:
 1. If you are not in Ghidra, you can right-click a function and go to `Plugins` or directly use the `DAILA ...` menu.
