@@ -40,6 +40,10 @@ Currently, we only support `Function Identification`, which can also be activate
 
 Comments will appear in the function header with the identification or an error message.
 
+## Supported Decompilers
+- IDA
+- Binja
+- Ghidra
 
 ## Features
 ### Function Identification
