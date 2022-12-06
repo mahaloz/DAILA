@@ -16,6 +16,12 @@ as the one you are using in your decompiler.
 If you are using Ghidra, you may be required to enable the `$USER_HOME/ghidra_scripts` as a valid 
 scripts path. 
 
+If your deocmpiler does not have access to the `OPENAI_API_KEY`, then you must modify the code here:
+https://github.com/mahaloz/DAILA/blob/13ca044dd677d47dc50092651dcff96a3a9c1103/daila/controller.py#L13
+
+Simply place your key there. 
+
+
 ### Manual Install
 If the above fails, you will need to manually install.
 To manually install, first `pip3 install -e .` on the repo, then copy the python file for your decompiler in your 
