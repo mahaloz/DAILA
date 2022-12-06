@@ -38,6 +38,8 @@ In your decompiler you can access the DAILA options in one of two ways:
 Currently, we only support `Function Identification`, which can also be activated with `Ctrl+Alt+Shift+I`.
 ![](./assets/daila_ida_2.png)
 
+Comments will appear in the function header with the identification or an error message.
+
 
 ## Features
 ### Function Identification
