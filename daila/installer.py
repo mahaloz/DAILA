@@ -55,8 +55,9 @@ class DAILAInstaller(Installer):
         if not dst_path.exists():
             return None
 
-        self.link_or_copy(src_ghidra_py, dst_path)
-        return dst_path.joinpath(src_ghidra_py.name)
+        dst_ghidra_py = dst_path.joinpath(src_ghidra_py.name)
+        self.link_or_copy(src_ghidra_py, dst_ghidra_py)
+        return dst_ghidra_py
 
     def install_binja(self, path=None):
         binja_plugin_path = super().install_binja(path=path)
