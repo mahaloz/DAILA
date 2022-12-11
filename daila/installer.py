@@ -42,12 +42,12 @@ class DAILAInstaller(Installer):
         return dst_ida_py
 
     def install_ghidra(self, path=None):
-        ghidra_path = self.ask_path("Ghidra Install Path:") if path is None else path
+        ghidra_path = self.ask_path("Ghidra Scripts Path:") if path is None else path
         if not ghidra_path:
             return None
 
         ghidra_path: Path = ghidra_path.expanduser().absolute()
-        if not path.exists():
+        if not ghidra_path.exists():
             return None
 
         src_ghidra_py = self.plugins_path.joinpath("daila_ghidra.py").absolute()
