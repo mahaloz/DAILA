@@ -32,7 +32,7 @@ def main():
         DAILAInstaller().install()
 
     if args.server:
-        DAILAServer().start_xmlrpc_server()
+        DAILAServer(use_py2_exceptions=True).start_xmlrpc_server()
 
 
 if __name__ == "__main__":

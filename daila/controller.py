@@ -30,7 +30,6 @@ class DAILAController:
     #
 
     def _ask_gpt(self, question):
-        response = None
         try:
             response = openai.Completion.create(
                 model="text-davinci-003",

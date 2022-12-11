@@ -13,21 +13,29 @@ class RequestHandler(SimpleXMLRPCRequestHandler):
 
 
 class DAILAServer:
-    def __init__(self, host=None, port=None):
+    def __init__(self, host=None, port=None, use_py2_exceptions=False):
         self.host = host
         self.port = port
         self.running = False
         self.controller = DAILAController()
+
+        self.use_py2_exceptions = use_py2_exceptions
 
     #
     # Public API
     #
     def identify_function(self, decompilation: str):
         if not decompilation:
-            print("NO DECOMPILATION")
             return ""
 
-        success, result = self.controller.identify_decompilation(None, dec=decompilation)
+        try:
+            success, result = self.controller.identify_decompilation(None, dec=decompilation)
+        except Exception as e:
+            if self.use_py2_exceptions:
+                raise BaseException(**e.args)
+            else:
+                raise e
+
         if not success or not isinstance(result, str):
             return ""
 
