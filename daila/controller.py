@@ -42,7 +42,7 @@ class DAILAController:
                 presence_penalty=1
             )
         except openai.OpenAIError as e:
-            raise print(f"ChatGPT could not complete the request: {str(e)}")
+            raise Exception(f"ChatGPT could not complete the request: {str(e)}")
 
         answer = None
         try:
