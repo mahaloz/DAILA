@@ -66,7 +66,10 @@ def start_server():
 def identify_function():
     server_proc = start_server()
     sleep(1)
-    request_identification()
+    try:
+        request_identification()
+    except Exception as e:
+        print("Exception occurred", e)
     server_proc.kill()
 
 
