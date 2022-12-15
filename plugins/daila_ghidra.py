@@ -44,7 +44,8 @@ def request_identification():
     server = xmlrpclib.ServerProxy('http://localhost:44414')
     try:
         server.ping()
-    except Exception as e:
+    except BaseException as e:
+        print("[!] Encountered an error when creating the py3 server", e)
         return None
 
     decomp = decompile_curr_func()
