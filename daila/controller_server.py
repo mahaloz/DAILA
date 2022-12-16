@@ -32,7 +32,7 @@ class DAILAServer:
             success, result = self.controller.identify_decompilation(None, dec=decompilation)
         except Exception as e:
             if self.use_py2_exceptions:
-                raise BaseException(**e.args)
+                raise BaseException(*e.args)
             else:
                 raise e
 
