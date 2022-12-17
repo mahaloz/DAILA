@@ -24,12 +24,20 @@ class DAILAServer:
     #
     # Public API
     #
-    def identify_function(self, decompilation: str):
+    def identify_function(self, decompilation: str, option=1):
         if not decompilation:
             return ""
 
         try:
-            success, result = self.controller.identify_decompilation(None, dec=decompilation)
+            if option == 1:
+                success, result = self.controller.identify_decompilation(None, dec=decompilation)
+                
+            elif option == 2:
+                success, result = self.controller.explain_decompilation(None, dec=decompilation)
+                
+            elif option == 3:
+                success, result = self.controller.find_vuln_decompilation(None, dec=decompilation)
+                
         except Exception as e:
             if self.use_py2_exceptions:
                 raise BaseException(*e.args)

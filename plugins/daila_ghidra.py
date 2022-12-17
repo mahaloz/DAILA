@@ -51,8 +51,11 @@ def request_identification():
     decomp = decompile_curr_func()
     if decomp is None:
         return None
+        
+    # TODO: On window menu
+    option = 1
 
-    resp = server.identify_function(decomp)
+    resp = server.identify_function(decomp, option)
     if not resp:
         return None
 
