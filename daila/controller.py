@@ -29,16 +29,17 @@ class DAILAController:
     # gpt interface
     #
 
-    def _ask_gpt(self, question):
+    def _ask_gpt(self, question: str, model: str, temperature=0, max_tokens=64, frequency_penalty=0, presence_penalty=0):
         try:
             response = openai.Completion.create(
-                model="text-davinci-003",
+                model=model,
                 prompt=question,
-                temperature=0.6,
-                max_tokens=500,
+                temperature=temperature,
+                max_tokens=max_tokens,
                 top_p=1,
-                frequency_penalty=1,
-                presence_penalty=1
+                frequency_penalty=frequency_penalty,
+                presence_penalty=presence_penalty,
+                stop=["\"\"\""]
             )
         except openai.OpenAIError as e:
             raise Exception(f"ChatGPT could not complete the request: {str(e)}")
@@ -55,12 +56,20 @@ class DAILAController:
     # identification public api
     #
 
-    def id_current_function(self, **kwargs):
+    def id_current_function(self, option, **kwargs):
         func_addr = self._current_function_addr(**kwargs)
         if func_addr is None:
             return False
-
-        success, id_str = self.identify_decompilation(func_addr, **kwargs)
+            
+        # TODO: On window menu
+        option = 1
+        
+        if option == 1:
+            success, id_str = self.identify_decompilation(func_addr, **kwargs)
+	
+        elif option == 2:
+            success, id_str = self.explain_decompilation(func_addr, **kwargs)
+	
         if not success or id_str is None:
             return False
 
@@ -71,10 +80,12 @@ class DAILAController:
         if not dec:
             return False, None
 
-        response: Optional[str] = self._ask_gpt(
-            "What open source project is this code from. Please only give me the program name and package name:\n"
-            f'"{dec}"'
-        )
+        question = "What open source project is this code from. Please only give me the program name and package name:\n" \
+                 f'"{dec}"' \
+                   "\"\"\""
+                   
+        model = "text-davinci-003"
+        response: Optional[str] = self._ask_gpt(question, model, 0.6, 500, 1, 1)
 
         if response is None:
             return False, None
@@ -83,9 +94,9 @@ class DAILAController:
         from_str = response.split("from")[-1].strip()
 
         # attempt a link lookup
-        link_response: Optional[str] = self._ask_gpt(
-            f"Where can I find {from_str}?"
-        )
+        question = f"Where can I find {from_str}?"
+        link_response: Optional[str] = self._ask_gpt(question, model, 0.6, 500, 1, 1)
+
         if link_response is None:
             return True, from_str
 
@@ -95,5 +106,26 @@ class DAILAController:
         {from_str}
         
         Links: {links}
+        """
+        return True, textwrap.dedent(id_str)
+        
+    def explain_decompilation(self, func_addr, dec=None, **kwargs):
+        dec = dec or self._decompile(func_addr, **kwargs)
+        if not dec:
+            return False, None
+
+        question = f'"{dec}"' \
+                     "\"\"\"" \
+                     "Here's what the above source code is doing:\n"
+                   
+        model = "code-davinci-002"
+        response: Optional[str] = self._ask_gpt(question, model, max_tokens=64)
+
+        if response is None:
+            return False, None
+
+        id_str = f"""\
+        DAILA EXPLANATION:
+        {response}
         """
         return True, textwrap.dedent(id_str)

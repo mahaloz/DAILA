@@ -27,9 +27,17 @@ class DAILAServer:
     def identify_function(self, decompilation: str):
         if not decompilation:
             return ""
+            
+        # TODO: On window menu
+        option = 1
 
         try:
-            success, result = self.controller.identify_decompilation(None, dec=decompilation)
+            if option == 1:
+                success, result = self.controller.identify_decompilation(None, dec=decompilation)
+                
+            elif option == 2:
+                success, result = self.controller.explain_decompilation(None, dec=decompilation)
+                
         except Exception as e:
             if self.use_py2_exceptions:
                 raise BaseException(*e.args)
