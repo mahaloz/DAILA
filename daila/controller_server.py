@@ -29,7 +29,7 @@ class DAILAServer:
             return ""
             
         # TODO: On window menu
-        option = 1
+        option = 3
 
         try:
             if option == 1:
@@ -37,6 +37,9 @@ class DAILAServer:
                 
             elif option == 2:
                 success, result = self.controller.explain_decompilation(None, dec=decompilation)
+                
+            elif option == 3:
+                success, result = self.controller.find_vuln_decompilation(None, dec=decompilation)
                 
         except Exception as e:
             if self.use_py2_exceptions:
