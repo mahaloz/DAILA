@@ -6,6 +6,7 @@
 import xmlrpclib
 from time import sleep
 import subprocess
+import json
 
 from ghidra.app.decompiler.flatapi import FlatDecompilerAPI
 from ghidra.program.flatapi import FlatProgramAPI
@@ -38,8 +39,7 @@ def set_func_comment(comment):
 
     func.setComment(comment)
     return True
-
-
+    
 def request_identification():
     server = xmlrpclib.ServerProxy('http://localhost:44414')
     try:
@@ -52,7 +52,10 @@ def request_identification():
     if decomp is None:
         return None
 
-    resp = server.identify_function(decomp)
+    # TODO: On window menu
+    option = 4
+        
+    resp = server.identify_function(decomp, option)
     if not resp:
         return None
 
