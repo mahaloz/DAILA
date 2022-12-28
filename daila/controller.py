@@ -73,9 +73,6 @@ class DAILAController:
 	
         elif option == 3:
             success, id_str = self.find_vuln_decompilation(func_addr, **kwargs)
-            
-        elif option == 4:
-            success, id_str = self.rename_decompilation(func_addr, **kwargs)
 	
         if not success or id_str is None:
             return False
@@ -154,27 +151,6 @@ class DAILAController:
 
         id_str = f"""\
         DAILA FIND VULN:
-        {response}
-        """
-        return True, textwrap.dedent(id_str)
-        
-    def rename_decompilation(self, func_addr, dec=None, **kwargs):
-        dec = dec or self._decompile(func_addr, **kwargs)
-        if not dec:
-            return False, None
-
-        question = "Analyze what the following function does. Suggest better variable names and its own function name. Do not suggest names for inside functions. Reply whit a JSON array where keys are the original names and values are the propossed names:\n" \
-                 f'"{dec}"' \
-                   "\"\"\""
-                   
-        model = "text-davinci-003"
-        response: Optional[str] = self._ask_gpt(question, model, 0.6, 2048, 1, 1)
-
-        if response is None:
-            return False, None
-
-        id_str = f"""\
-        DAILA RENAME CODE:
         {response}
         """
         return True, textwrap.dedent(id_str)
