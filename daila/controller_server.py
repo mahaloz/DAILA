@@ -43,7 +43,6 @@ class DAILAServer:
     #
     # Public API
     #
-
     @proxy_and_catch
     def identify_function(self, decompilation: str):
         if not decompilation:
@@ -72,6 +71,17 @@ class DAILAServer:
             return ""
 
         success, result = self.controller.find_vuln_decompilation(None, dec=decompilation)
+        if not success or not isinstance(result, str):
+            return ""
+
+        return result
+    
+    @proxy_and_catch
+    def rename_func_and_vars_function(self, decompilation: str):
+        if not decompilation:
+            return ""
+
+        success, result = self.controller.rename_func_and_vars(None, dec=decompilation)
         if not success or not isinstance(result, str):
             return ""
 
@@ -109,6 +119,7 @@ class DAILAServer:
         server.register_function(self.identify_function)
         server.register_function(self.explain_function)
         server.register_function(self.find_vulns_function)
+        server.register_function(self.rename_func_and_vars_function)
         server.register_function(self.set_api_key)
         server.register_function(self.ping)
         server.register_function(self.shutdown)

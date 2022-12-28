@@ -45,7 +45,6 @@ class DAILAController:
     #
     # gpt interface
     #
-
     def ask_api_key(self):
         pass
 
@@ -86,7 +85,6 @@ class DAILAController:
     #
     # identification public api
     #
-
     def explain_current_function(self, *args, **kwargs):
         func_addr = self._current_function_addr(**kwargs)
         if func_addr is None:
@@ -124,8 +122,9 @@ class DAILAController:
         func_addr = self._current_function_addr(**kwargs)
         if func_addr is None:
             return False
-
+            
         success, id_str = self.identify_decompilation(func_addr, **kwargs)
+            
         if not success or id_str is None:
             return False
 
@@ -168,9 +167,10 @@ class DAILAController:
 
     def find_vuln_decompilation(self, func_addr, dec=None, **kwargs):
         dec = dec or self._decompile(func_addr, **kwargs)
+        
         if not dec:
             return False, None
-
+            
         response: Optional[str] = self._ask_gpt(
             'Can you find the vulnerabilty in the following function and suggest the possible way to exploit it?\n'
             f'{dec}'
@@ -200,3 +200,40 @@ class DAILAController:
             return False
 
         return self._cmt_func(func_addr, output, **kwargs)
+        
+    def rename_func_and_vars(self, func_addr, dec=None, **kwargs):
+        dec = dec or self._decompile(func_addr, **kwargs)
+        
+        if not dec:
+            return False, None
+
+        response: Optional[str] = self._ask_gpt(
+            'Analyze what the following function does. Suggest better variable names and its own function name. Do not suggest names for inside functions. Reply whit a JSON array where keys are the original names and values are the propossed names:\n'
+            f'{dec}'
+            '"""',
+            temperature=0.6,
+            max_tokens=512,
+            frequency_penalty=1,
+            presence_penalty=1
+        )
+
+        if response is None:
+            return False, None
+
+        output = f"""\
+        DAILA RENAME CODE:
+        {response}
+        """
+        return True, textwrap.dedent(output)
+        
+    def rename_func_and_vars_current_function(self, *args, **kwargs):
+        func_addr = self._current_function_addr(**kwargs)
+        if func_addr is None:
+            return False
+
+        success, output = self.rename_func_and_vars(func_addr, **kwargs)
+        if not success or output is None:
+            return False
+
+        return self._cmt_func(func_addr, output, **kwargs)
+
