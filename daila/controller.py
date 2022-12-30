@@ -12,8 +12,9 @@ class DAILAController:
     def __init__(self, openai_api_key=None):
         self.daila_ops = {
             "daila:get_key": ("Update OpenAPI Key...", self.ask_api_key),
-            "daila:identify_func":("Identify the source of the current function", self.identify_current_function),
-            "daila:explain_func":("Explain what the current function does", self.explain_current_function)
+            "daila:identify_func": ("Identify the source of the current function", self.identify_current_function),
+            "daila:explain_func": ("Explain what the current function does", self.explain_current_function),
+            "daila:find_vuln_func": ("Find the vuln in the current function", self.find_vuln_current_function)
         }
         for menu_str, callback_info in self.daila_ops.items():
             callback_str, callback_func = callback_info
@@ -88,7 +89,7 @@ class DAILAController:
         if func_addr is None:
             return False
 
-        success, explaination = self.explian_decompilation(func_addr, **kwargs)
+        success, explaination = self.explain_decompilation(func_addr, **kwargs)
         if not success or explaination is None:
             return False
 
@@ -171,7 +172,6 @@ class DAILAController:
             'Can you find the vulnerabilty in the following function and suggest the possible way to exploit it?\n'
             f'{dec}'
             '"""',
-            model="text-davinci-003",
             temperature=0.6,
             max_tokens=2500,
             frequency_penalty=1,
@@ -182,7 +182,18 @@ class DAILAController:
             return False, None
 
         output = f"""\
-        DAILA FIND VULN:
+        DAILA FIND-VULN:
         {response}
         """
         return True, textwrap.dedent(output)
+
+    def find_vuln_current_function(self, *args, **kwargs):
+        func_addr = self._current_function_addr(**kwargs)
+        if func_addr is None:
+            return False
+
+        success, output = self.find_vuln_decompilation(func_addr, **kwargs)
+        if not success or output is None:
+            return False
+
+        return self._cmt_func(func_addr, output, **kwargs)

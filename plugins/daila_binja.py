@@ -111,6 +111,16 @@ class BinjaDAILAController(DAILAController):
         bv, address = args[0:2]
         super().identify_current_function(address=address, bv=bv)
 
+    @with_loading_popup
+    def explain_current_function(self, *args, **kwargs):
+        bv, address = args[0:2]
+        super().explain_current_function(address=address, bv=bv)
+
+    @with_loading_popup
+    def find_vuln_current_function(self, *args, **kwargs):
+        bv, address = args[0:2]
+        super().find_vuln_current_function(address=address, bv=bv)
+
 
 class DAILAPlugin:
     def __init__(self):

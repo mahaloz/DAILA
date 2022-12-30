@@ -121,6 +121,17 @@ def explain_function():
 
         set_func_comment(resp)
 
+def find_function_vuln():
+    with ServerCtx() as server:
+        decomp = decompile_curr_func()
+        if decomp is None:
+            return None
+
+        resp = server.find_vulns_function(decomp)
+        if not resp:
+            return None
+
+        set_func_comment(resp)
 
 def set_api_key():
     old_key = os.getenv("OPENAI_API_KEY")
@@ -141,6 +152,7 @@ def set_api_key():
 DAILA_OPS = {
     "Identify function source": identify_function,
     "Explain function": explain_function,
+    "Find function vulns": find_function_vuln,
     "Set OpenAPI Key...": set_api_key,
 }
 
