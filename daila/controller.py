@@ -54,16 +54,19 @@ class DAILAController:
         self._api_key = data
         openai.api_key = self._api_key
 
-    def _ask_gpt(self, question):
+    def _ask_gpt(self, question: str, model="text-davinci-003", temperature=0.0, max_tokens=64, frequency_penalty=0,
+                 presence_penalty=0):
         try:
             response = openai.Completion.create(
-                model="text-davinci-003",
+                model=model,
                 prompt=question,
-                temperature=0.6,
-                max_tokens=500,
+                temperature=temperature,
+                max_tokens=max_tokens,
                 top_p=1,
-                frequency_penalty=1,
-                presence_penalty=1
+                frequency_penalty=frequency_penalty,
+                presence_penalty=presence_penalty,
+                timeout=60,
+                stop=['"""']
             )
         except openai.OpenAIError as e:
             raise Exception(f"ChatGPT could not complete the request: {str(e)}")
@@ -80,9 +83,6 @@ class DAILAController:
     # identification public api
     #
 
-    def explian_decompilation(self, func_addr, dec=None, **kwargs):
-        return False, ""
-
     def explain_current_function(self, *args, **kwargs):
         func_addr = self._current_function_addr(**kwargs)
         if func_addr is None:
@@ -93,6 +93,28 @@ class DAILAController:
             return False
 
         return self._cmt_func(func_addr, explaination, **kwargs)
+
+    def explain_decompilation(self, func_addr, dec=None, **kwargs):
+        dec = dec or self._decompile(func_addr, **kwargs)
+        if not dec:
+            return False, None
+
+        response: Optional[str] = self._ask_gpt(
+            f'{dec}'
+            '"""'
+            'Here is what the above source code is doing:\n',
+            model="code-davinci-002",
+            max_tokens=64
+        )
+
+        if response is None:
+            return False, None
+
+        id_str = f"""\
+        DAILA EXPLANATION:
+        {response}
+        """
+        return True, textwrap.dedent(id_str)
 
     def identify_current_function(self, *args, **kwargs):
         func_addr = self._current_function_addr(**kwargs)
@@ -111,8 +133,11 @@ class DAILAController:
             return False, None
 
         response: Optional[str] = self._ask_gpt(
-            "What open source project is this code from. Please only give me the program name and package name:\n"
-            f'"{dec}"'
+            'What open source project is this code from. Please only give me the program name and package name:\n'
+            f'{dec}'
+            '"""',
+            temperature=0.6,
+            max_tokens=500
         )
 
         if response is None:
@@ -136,3 +161,28 @@ class DAILAController:
         Links: {links}
         """
         return True, textwrap.dedent(id_str)
+
+    def find_vuln_decompilation(self, func_addr, dec=None, **kwargs):
+        dec = dec or self._decompile(func_addr, **kwargs)
+        if not dec:
+            return False, None
+
+        response: Optional[str] = self._ask_gpt(
+            'Can you find the vulnerabilty in the following function and suggest the possible way to exploit it?\n'
+            f'{dec}'
+            '"""',
+            model="text-davinci-003",
+            temperature=0.6,
+            max_tokens=2500,
+            frequency_penalty=1,
+            presence_penalty=1
+        )
+
+        if response is None:
+            return False, None
+
+        output = f"""\
+        DAILA FIND VULN:
+        {response}
+        """
+        return True, textwrap.dedent(output)

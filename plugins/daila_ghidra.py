@@ -52,10 +52,10 @@ def set_func_comment(comment):
 class ServerCtx:
     def __init__(self, host="http://localhost", port=44414):
         self.proxy_host = "%s:%d" % (host, port)
-    
+
         self.server_proc = None
         self.server = None
-     
+
     def __enter__(self, *args, **kwargs):
         self._start_server()
         key = os.getenv("OPENAI_API_KEY")
@@ -84,13 +84,13 @@ class ServerCtx:
 
     def _stop_server(self):
         if self.server_proc is None or self.server is None:
-            return 
-        
+            return
+
         self.server.shutdown()
         self.server_proc.kill()
         self.server = None
         self.server_proc = None
-            
+
 #
 # DAILA API
 #
@@ -130,9 +130,9 @@ def set_api_key():
 
     with ServerCtx() as server:
         server.set_api_key("")
-    
+
     os.putenv("OPENAI_API_KEY", key)
-    
+
 #
 # Operation Selector
 #
