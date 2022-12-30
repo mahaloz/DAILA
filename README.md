@@ -16,11 +16,8 @@ as the one you are using in your decompiler.
 If you are using Ghidra, you may be required to enable the `$USER_HOME/ghidra_scripts` as a valid 
 scripts path. 
 
-If your decompiler does not have access to the `OPENAI_API_KEY`, then you must modify the code here:
-https://github.com/mahaloz/DAILA/blob/13ca044dd677d47dc50092651dcff96a3a9c1103/daila/controller.py#L13
-
-Simply place your key there. 
-
+If your decompiler does not have access to the `OPENAI_API_KEY`, then you must use the decompiler option from
+DAILA to set the API key. A popup will appear for you to enter your key. 
 
 ### Manual Install
 If the above fails, you will need to manually install.
@@ -33,9 +30,9 @@ You must have `python3` in your path for the Ghidra version to work. We quite li
 ## Usage
 In your decompiler you can access the DAILA options in one of two ways:
 1. If you are not in Ghidra, you can right-click a function and go to `Plugins` or directly use the `DAILA ...` menu.
-2. If you are in Ghidra, use `Tools->DAILA ...` when selected on a function
+2. If you are in Ghidra, use `Tools->DAILA` then use the operation selector
 
-Currently, we only support `Function Identification`, which can also be activated with `Ctrl+Alt+Shift+I`.
+Currently, we only support `Function Identification`, which can also be activated with `Ctrl+Alt+Shift+D`.
 ![](./assets/daila_ida_2.png)
 
 Comments will appear in the function header with the identification or an error message.

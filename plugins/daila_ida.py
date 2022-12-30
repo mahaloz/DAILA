@@ -85,60 +85,54 @@ class DAILAPlugin(idaapi.plugin_t):
 
     def __init__(self, *args, **kwargs):
         print("[DAILA] loaded!")
+        self.controller = IDADAILAController()
 
 
     def init(self):
-        """
-        This init is highly inspired by the code here:
-        https://github.com/JusticeRage/Gepetto
-        """
-        global controller
-        controller = IDADAILAController()
-
-        # Check for whether the decompiler is available
         if not ida_hexrays.init_hexrays_plugin():
             return idaapi.PLUGIN_SKIP
 
-        # Function explaining action
-        explain_action = idaapi.action_desc_t(
-            self.id_action_name,
-            'ID Function',
-            IdentifyAction(),
-            "Ctrl+Alt+Shift+I",
-            'Use ChatGPT to identify the currently selected function',
-            199
-        )
-        idaapi.register_action(explain_action)
-        idaapi.attach_action_to_menu(self.id_menu_path, self.id_action_name, idaapi.SETMENU_APP)
-        
-        self.menu = ContextMenuHooks()
-        self.menu.hook()
+        self.controller.hook_menu()
         return idaapi.PLUGIN_KEEP
     
     def run(self, arg):
         pass
 
     def term(self):
-        pass 
+        pass
 
 
 class ContextMenuHooks(idaapi.UI_Hooks):
+    def __init__(self, *args, menu_strs=None, **kwargs):
+        idaapi.UI_Hooks.__init__(self)
+        self.menu_strs = menu_strs or []
+
     def finish_populating_widget_popup(self, form, popup):
         # Add actions to the context menu of the Pseudocode view
         if idaapi.get_widget_type(form) == idaapi.BWN_PSEUDOCODE or idaapi.get_widget_type(form) == idaapi.BWN_DISASM:
-            idaapi.attach_action_to_popup(form, popup, DAILAPlugin.id_action_name, "DAILA/")
+            for menu_str in self.menu_strs:
+                #idaapi.attach_action_to_popup(form, popup, DAILAPlugin.id_action_name, "DAILA/")
+                idaapi.attach_action_to_popup(form, popup, menu_str, "DAILA/")
 
 
-class IdentifyAction(idaapi.action_handler_t):
-    def __init__(self):
+class GenericAction(idaapi.action_handler_t):
+    def __init__(self, action_target, action_function):
         idaapi.action_handler_t.__init__(self)
+        self.action_target = action_target
+        self.action_function = action_function
 
     def activate(self, ctx):
-        dec_view = ida_hexrays.get_widget_vdui(ctx.widget)
+        if ctx is None or ctx.action != self.action_target:
+            return
 
+        dec_view = ida_hexrays.get_widget_vdui(ctx.widget)
+        # show a thing while we query
         prg = QProgressDialog("Querying AI...", "Stop", 0, 1, None)
         prg.show()
-        controller.id_current_function()
+
+        self.action_function()
+
+        # close the panel we showed while running
         prg.setValue(1)
         prg.close()
 
@@ -149,8 +143,13 @@ class IdentifyAction(idaapi.action_handler_t):
     def update(self, ctx):
         return idaapi.AST_ENABLE_ALWAYS
 
-    
+
 class IDADAILAController(DAILAController):
+    def __init__(self):
+        self.menu_actions = []
+        super().__init__(self)
+        self.menu = None
+
     def _decompile(self, func_addr: int, **kwargs):
         try:
             cfunc = ida_hexrays.decompile(func_addr)
@@ -169,12 +168,40 @@ class IDADAILAController(DAILAController):
             return None
 
         return func.start_ea
-    
+
     def _cmt_func(self, func_addr: int, comment: str, **kwargs):
         idc.set_func_cmt(func_addr, comment, 0)
         return True
 
-    @execute_write
-    def id_current_function(self):
-        return super().id_current_function()
+    def _register_menu_item(self, name, action_string, callback_func):
+        # Function explaining action
+        explain_action = idaapi.action_desc_t(
+            name,
+            action_string,
+            GenericAction(name, callback_func),
+            "",
+            action_string,
+            199
+        )
+        idaapi.register_action(explain_action)
+        idaapi.attach_action_to_menu(f"Edit/DAILA/{name}", name, idaapi.SETMENU_APP)
+        self.menu_actions.append(name)
 
+    def hook_menu(self):
+        self.menu = ContextMenuHooks(menu_strs=self.menu_actions)
+        self.menu.hook()
+
+    def ask_api_key(self, *args, **kwargs):
+        resp = idaapi.ask_str(self.api_key if isinstance(self.api_key, str) else "", 0, "Enter you OpenAI API Key: ")
+        if resp is None:
+            return
+
+        self.api_key = resp
+
+    @execute_write
+    def identify_current_function(self):
+        return super().identify_current_function()
+
+    @execute_write
+    def explain_current_function(self, **kwargs):
+        return super().explain_current_function(**kwargs)

@@ -1,5 +1,6 @@
 from daila.controller import DAILAController
 from xmlrpc.server import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
+from functools import wraps
 
 """
 What you want:
@@ -7,9 +8,27 @@ What you want:
 - You send back identification string 
 """
 
-
 class RequestHandler(SimpleXMLRPCRequestHandler):
     rpc_paths = ("/RPC2",)
+
+
+def proxy_and_catch(func):
+    @wraps(func)
+    def _proxy_and_catch(self, *args, **kwargs):
+        if not args or not args[0]:
+            return ""
+
+        output = ""
+        try:
+            output = func(self, *args, **kwargs)
+        except Exception as e:
+            if self.use_py2_exceptions:
+                raise BaseException(*e.args)
+            else:
+                raise e
+
+        return output
+    return _proxy_and_catch
 
 
 class DAILAServer:
@@ -24,30 +43,32 @@ class DAILAServer:
     #
     # Public API
     #
-    def identify_function(self, decompilation: str, option=1):
+
+    @proxy_and_catch
+    def identify_function(self, decompilation: str):
         if not decompilation:
             return ""
 
-        try:
-            if option == 1:
-                success, result = self.controller.identify_decompilation(None, dec=decompilation)
-                
-            elif option == 2:
-                success, result = self.controller.explain_decompilation(None, dec=decompilation)
-                
-            elif option == 3:
-                success, result = self.controller.find_vuln_decompilation(None, dec=decompilation)
-                
-        except Exception as e:
-            if self.use_py2_exceptions:
-                raise BaseException(*e.args)
-            else:
-                raise e
-
+        success, result = self.controller.identify_decompilation(None, dec=decompilation)
         if not success or not isinstance(result, str):
             return ""
 
         return result
+
+    @proxy_and_catch
+    def explain_function(self, decompilation: str):
+        if not decompilation:
+            return ""
+
+        success, result = self.controller.explian_decompilation(None, dec=decompilation)
+        if not success or not isinstance(result, str):
+            return ""
+
+        return result
+
+    def set_api_key(self, api_key: str):
+        if api_key:
+            self.controller.api_key = api_key
 
     #
     # XMLRPC Server
@@ -75,6 +96,8 @@ class DAILAServer:
         )
         server.register_introspection_functions()
         server.register_function(self.identify_function)
+        server.register_function(self.explain_function)
+        server.register_function(self.set_api_key)
         server.register_function(self.ping)
         server.register_function(self.shutdown)
         print("[+] Registered decompilation server!")
