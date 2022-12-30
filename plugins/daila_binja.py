@@ -1,3 +1,6 @@
+from functools import wraps
+
+import binaryninja
 from binaryninja import PluginCommand
 from binaryninja import lineardisassembly
 from binaryninja.function import DisassemblySettings
@@ -8,10 +11,30 @@ from PySide6.QtWidgets import QProgressDialog
 from daila.controller import DAILAController
 
 
+def with_loading_popup(func):
+    @wraps(func)
+    def _with_loading_popup(*args, **kwargs):
+        prg = QProgressDialog("Querying AI...", "Stop", 0, 1, None)
+        prg.show()
+
+        try:
+            out = func(*args, **kwargs)
+        except Exception as e:
+            print(e)
+            out = None
+
+        prg.setValue(1)
+        prg.close()
+        return out
+
+    return _with_loading_popup
+
+
 class BinjaDAILAController(DAILAController):
-    def __init__(self, bv=None):
+    def __init__(self, bv=None, plugin=None):
+        self.bv = bv
+        self.plugin = plugin
         super().__init__()
-        self.bv = None
 
     def _current_function_addr(self, **kwargs):
         addr = kwargs.get("address", None)
@@ -68,10 +91,30 @@ class BinjaDAILAController(DAILAController):
 
         func.comment = comment
 
+    def _register_menu_item(self, name, action_string, callback_func):
+        PluginCommand.register_for_address(
+            f"DAILA: {action_string}",
+            action_string,
+            callback_func,
+            is_valid=self.plugin.is_func
+        )
+
+    def ask_api_key(self, *args, **kwargs):
+        resp = binaryninja.get_text_line_input("Enter you OpenAI API Key: ", "DAILA: Update API Key")
+        if not resp:
+            return
+
+        self.api_key = resp.decode()
+
+    @with_loading_popup
+    def identify_current_function(self, *args, **kwargs):
+        bv, address = args[0:2]
+        super().identify_current_function(address=address, bv=bv)
+
 
 class DAILAPlugin:
     def __init__(self):
-        self.controller = BinjaDAILAController()
+        self.controller = BinjaDAILAController(plugin=self)
 
     @staticmethod
     def get_func(bv, address):
@@ -88,19 +131,5 @@ class DAILAPlugin:
         func = DAILAPlugin.get_func(bv, address)
         return func is not None
 
-    def identify_function(self, bv, address):
-        print("[+] Identifying Function Now. Please Wait...")
-        prg = QProgressDialog("Querying AI...", "Stop", 0, 1, None)
-        prg.show()
-        self.controller.id_current_function(address=address, bv=bv)
-        prg.setValue(1)
-        prg.close()
-
 
 plugin = DAILAPlugin()
-PluginCommand.register_for_address(
-    "DAILA: Identify Function",
-    "Identifies the current function you are in and sets response in comment",
-    plugin.identify_function,
-    is_valid=plugin.is_func
-)

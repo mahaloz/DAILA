@@ -1,5 +1,5 @@
 import re
-from typing import Optional
+from typing import Optional, Dict
 import os
 import textwrap
 
@@ -10,7 +10,17 @@ LINK_REGEX = r"""(?i)\b((?:https?:(?:/{1,3}|[a-z0-9%])|[a-z0-9.\-]+[.](?:com|net
 
 class DAILAController:
     def __init__(self, openai_api_key=None):
-        openai.api_key = os.getenv("OPENAI_API_KEY") or openai_api_key
+        self.daila_ops = {
+            "daila:get_key": ("Update OpenAPI Key...", self.ask_api_key),
+            "daila:identify_func":("Identify the source of the current function", self.identify_current_function),
+            "daila:explain_func":("Explain what the current function does", self.explain_current_function)
+        }
+        for menu_str, callback_info in self.daila_ops.items():
+            callback_str, callback_func = callback_info
+            self._register_menu_item(menu_str, callback_str, callback_func)
+
+        self._api_key = os.getenv("OPENAI_API_KEY") or openai_api_key
+        openai.api_key = self._api_key
 
     #
     # decompiler interface
@@ -25,9 +35,24 @@ class DAILAController:
     def _current_function_addr(self, **kwargs):
         return None
 
+    def _register_menu_item(self, name, action_string, callback_func):
+        return False
+
     #
     # gpt interface
     #
+
+    def ask_api_key(self):
+        pass
+
+    @property
+    def api_key(self):
+        return self._api_key
+
+    @api_key.setter
+    def api_key(self, data):
+        self._api_key = data
+        openai.api_key = self._api_key
 
     def _ask_gpt(self, question):
         try:
@@ -55,7 +80,21 @@ class DAILAController:
     # identification public api
     #
 
-    def id_current_function(self, **kwargs):
+    def explian_decompilation(self, func_addr, dec=None, **kwargs):
+        return False, ""
+
+    def explain_current_function(self, *args, **kwargs):
+        func_addr = self._current_function_addr(**kwargs)
+        if func_addr is None:
+            return False
+
+        success, explaination = self.explian_decompilation(func_addr, **kwargs)
+        if not success or explaination is None:
+            return False
+
+        return self._cmt_func(func_addr, explaination, **kwargs)
+
+    def identify_current_function(self, *args, **kwargs):
         func_addr = self._current_function_addr(**kwargs)
         if func_addr is None:
             return False
