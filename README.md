@@ -33,10 +33,12 @@ In your decompiler you can access the DAILA options in one of two ways:
 1. If you are not in Ghidra, you can right-click a function and go to `Plugins` or directly use the `DAILA ...` menu.
 2. If you are in Ghidra, use `Tools->DAILA` then use the operation selector
 
-Currently, we only support `Function Identification`, which can also be activated with `Ctrl+Alt+Shift+D`.
+All operations that DAILA can perform can be found from the DAILA context menu, which in some decompilers may just be 
+the menu described above.
+
 ![](./assets/ida_show_menu_daila.png)
 
-Comments will appear in the function header with the identification or an error message.
+Comments will appear in the function header with the response or an error message.
 
 ## Supported Decompilers
 - IDA
