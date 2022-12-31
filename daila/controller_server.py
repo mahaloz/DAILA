@@ -66,6 +66,17 @@ class DAILAServer:
 
         return result
 
+    @proxy_and_catch
+    def find_vulns_function(self, decompilation: str):
+        if not decompilation:
+            return ""
+
+        success, result = self.controller.find_vuln_decompilation(None, dec=decompilation)
+        if not success or not isinstance(result, str):
+            return ""
+
+        return result
+
     def set_api_key(self, api_key: str):
         if api_key:
             self.controller.api_key = api_key
@@ -97,6 +108,7 @@ class DAILAServer:
         server.register_introspection_functions()
         server.register_function(self.identify_function)
         server.register_function(self.explain_function)
+        server.register_function(self.find_vulns_function)
         server.register_function(self.set_api_key)
         server.register_function(self.ping)
         server.register_function(self.shutdown)
