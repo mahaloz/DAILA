@@ -1,7 +1,8 @@
 # DAILA 
-Decompiler Artificial Intelligence Language Assistant - Built on OpenAI
+Decompiler Artificial Intelligence Language Assistant - Built on OpenAI.
+Utilize OpenAI to improve your decompilation experience in most modern decompilers.
 
-![](./assets/daila-ida.png)
+![](./assets/ida_daila.png)
 
 ## Installation
 Clone down this repo and pip install and use the daila installer:
@@ -32,18 +33,31 @@ In your decompiler you can access the DAILA options in one of two ways:
 1. If you are not in Ghidra, you can right-click a function and go to `Plugins` or directly use the `DAILA ...` menu.
 2. If you are in Ghidra, use `Tools->DAILA` then use the operation selector
 
-Currently, we only support `Function Identification`, which can also be activated with `Ctrl+Alt+Shift+D`.
-![](./assets/daila_ida_2.png)
+All operations that DAILA can perform can be found from the DAILA context menu, which in some decompilers may just be 
+the menu described above.
 
-Comments will appear in the function header with the identification or an error message.
+![](./assets/ida_show_menu_daila.png)
+
+Comments will appear in the function header with the response or an error message.
 
 ## Supported Decompilers
 - IDA
+![](./assets/ida_daila.png)
+
 - Binja
+![](./assets/binja_daila.png)
+
 - Ghidra
+![](./assets/ghidra_daila.png)
 
 ## Features
 ### Function Identification
 We use ChatGPT to attempt to:
 1. Identify which open-source project this decompilation could be a result of 
 2. Find a link to that said source if it exists 
+
+### Function Summarization
+Summarizes in human-readable text what this function does
+
+### Vulnerability Detection
+Attempts to find and describe the vulnerability in the function 
