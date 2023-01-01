@@ -44,10 +44,6 @@ def set_func_comment(comment):
     func.setComment(comment)
     return True
 
-#
-# DAILA feature funcs
-#
-
 
 class ServerCtx:
     def __init__(self, host="http://localhost", port=44414):
@@ -132,6 +128,19 @@ def find_function_vuln():
             return None
 
         set_func_comment(resp)
+        
+def rename_func_and_vars():
+    with ServerCtx() as server:
+        decomp = decompile_curr_func()
+        if decomp is None:
+            return None
+
+        resp = server.rename_func_and_vars_function(decomp)
+        if not resp:
+            return None
+
+        set_func_comment(resp)
+
 
 def set_api_key():
     old_key = os.getenv("OPENAI_API_KEY")
@@ -153,6 +162,7 @@ DAILA_OPS = {
     "Identify function source": identify_function,
     "Explain function": explain_function,
     "Find function vulns": find_function_vuln,
+    "Rename function name and variables": rename_func_and_vars,
     "Set OpenAPI Key...": set_api_key,
 }
 
