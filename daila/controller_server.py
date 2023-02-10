@@ -60,7 +60,7 @@ class DAILAServer:
         if not decompilation:
             return ""
 
-        success, result = self.controller.explian_decompilation(None, dec=decompilation)
+        success, result = self.controller.explain_decompilation(None, dec=decompilation)
         if not success or not isinstance(result, str):
             return ""
 
