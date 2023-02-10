@@ -81,7 +81,7 @@ class DAILAServer:
         if not decompilation:
             return ""
 
-        success, result = self.controller.rename_func_and_vars(None, dec=decompilation)
+        success, result = self.controller.rename_variables(None, dec=decompilation)
         if not success or not isinstance(result, str):
             return ""
 

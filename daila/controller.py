@@ -2,6 +2,7 @@ import re
 from typing import Optional, Dict
 import os
 import textwrap
+import json
 
 import openai
 
@@ -14,7 +15,8 @@ class DAILAController:
             "daila:get_key": ("Update OpenAPI Key...", self.ask_api_key),
             "daila:identify_func": ("Identify the source of the current function", self.identify_current_function),
             "daila:explain_func": ("Explain what the current function does", self.explain_current_function),
-            "daila:find_vuln_func": ("Find the vuln in the current function", self.find_vuln_current_function)
+            "daila:find_vuln_func": ("Find the vuln in the current function", self.find_vuln_current_function),
+            "daila:rename_vars": ("Rename variables to better names", self.rename_variables_current_function),
         }
         for menu_str, callback_info in self.daila_ops.items():
             callback_str, callback_func = callback_info
@@ -201,9 +203,8 @@ class DAILAController:
 
         return self._cmt_func(func_addr, output, **kwargs)
         
-    def rename_func_and_vars(self, func_addr, dec=None, **kwargs):
+    def rename_variables(self, func_addr, dec=None, **kwargs):
         dec = dec or self._decompile(func_addr, **kwargs)
-        
         if not dec:
             return False, None
 
@@ -220,20 +221,26 @@ class DAILAController:
         if response is None:
             return False, None
 
-        output = f"""\
-        DAILA RENAME CODE:
-        {response}
-        """
-        return True, textwrap.dedent(output)
-        
-    def rename_func_and_vars_current_function(self, *args, **kwargs):
+        # patch the output, since it can be weird sometimes
+        if "}" not in response:
+            response += "}"
+
+        try:
+            var_map = json.loads(response)
+        except Exception:
+            var_map = None
+
+        update = False
+        if isinstance(var_map, dict):
+            update = self._rename_variables_by_name(func_addr, var_map)
+
+        return update
+
+    def rename_variables_current_function(self, *args, **kwargs):
         func_addr = self._current_function_addr(**kwargs)
         if func_addr is None:
             return False
 
-        success, output = self.rename_func_and_vars(func_addr, **kwargs)
-        if not success or output is None:
-            return False
-
-        return self._cmt_func(func_addr, output, **kwargs)
+        success = self.rename_variables(func_addr, **kwargs)
+        return success
 

@@ -1,5 +1,6 @@
 import threading
 import functools
+import time
 from typing import Optional, Dict
 
 import idaapi
