@@ -45,6 +45,7 @@ class DAILAController:
     #
     # gpt interface
     #
+
     def ask_api_key(self):
         pass
 
@@ -85,6 +86,7 @@ class DAILAController:
     #
     # identification public api
     #
+
     def explain_current_function(self, *args, **kwargs):
         func_addr = self._current_function_addr(**kwargs)
         if func_addr is None:
@@ -122,9 +124,8 @@ class DAILAController:
         func_addr = self._current_function_addr(**kwargs)
         if func_addr is None:
             return False
-            
+
         success, id_str = self.identify_decompilation(func_addr, **kwargs)
-            
         if not success or id_str is None:
             return False
 
@@ -167,10 +168,9 @@ class DAILAController:
 
     def find_vuln_decompilation(self, func_addr, dec=None, **kwargs):
         dec = dec or self._decompile(func_addr, **kwargs)
-        
         if not dec:
             return False, None
-            
+
         response: Optional[str] = self._ask_gpt(
             'Can you find the vulnerabilty in the following function and suggest the possible way to exploit it?\n'
             f'{dec}'
