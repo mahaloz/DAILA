@@ -1,6 +1,6 @@
 import threading
 import functools
-from typing import Optional
+from typing import Optional, Dict
 
 import idaapi
 import ida_hexrays
@@ -172,6 +172,28 @@ class IDADAILAController(DAILAController):
     def _cmt_func(self, func_addr: int, comment: str, **kwargs):
         idc.set_func_cmt(func_addr, comment, 0)
         return True
+
+    def _rename_variables_by_name(self, func_addr: int, names: Dict[str, str]):
+        dec = idaapi.decompile(func_addr)
+        if dec is None:
+            return False
+
+        lvars = {
+            lvar.name: lvar for lvar in dec.get_lvars() if lvar.name
+        }
+        update = False
+        for name, lvar in lvars.items():
+            new_name = names.get(name, None)
+            if new_name is None:
+                continue
+
+            lvar.name = new_name
+            update |= True
+
+        if update:
+            dec.refresh_func_ctext()
+
+        return update
 
     def _register_menu_item(self, name, action_string, callback_func):
         # Function explaining action
