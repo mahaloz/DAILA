@@ -1,6 +1,5 @@
 import threading
 import functools
-import time
 from typing import Optional, Dict
 
 import idaapi
@@ -8,7 +7,7 @@ import ida_hexrays
 import idc
 from PyQt5.QtWidgets import QProgressDialog
 
-from daila.controller import DAILAController
+from daila.interfaces.openai_interface import OpenAIInterface
 
 controller: Optional["IDADAILAController"] = None
 
@@ -145,7 +144,7 @@ class GenericAction(idaapi.action_handler_t):
         return idaapi.AST_ENABLE_ALWAYS
 
 
-class IDADAILAController(DAILAController):
+class IDADAILAController(OpenAIInterface):
     def __init__(self):
         self.menu_actions = []
         super().__init__(self)

@@ -1,4 +1,4 @@
-from daila.controller import DAILAController
+from daila.interfaces.openai_interface import OpenAIInterface
 from xmlrpc.server import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 from functools import wraps
 
@@ -36,7 +36,7 @@ class DAILAServer:
         self.host = host
         self.port = port
         self.running = False
-        self.controller = DAILAController()
+        self.controller = OpenAIInterface()
 
         self.use_py2_exceptions = use_py2_exceptions
 
