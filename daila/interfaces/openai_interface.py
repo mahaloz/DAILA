@@ -94,31 +94,33 @@ class OpenAIInterface(GenericAIInterface):
     #
 
     def _query_openai_model(
-            self,
-            question: str,
-            model: Optional[str] = None,
-            temperature=0.1,
-            max_tokens=None,
-            frequency_penalty=0,
-            presence_penalty=0
+        self,
+        question: str,
+        model: Optional[str] = None,
+        temperature=0.1,
+        max_tokens=None,
+        frequency_penalty=0,
+        presence_penalty=0
     ):
         try:
-            response = openai.Completion.create(
+            response = openai.ChatCompletion.create(
                 model=model or self.model,
-                prompt=question,
+                messages=[
+                    {"role": "user", "content": question}
+                ],
                 temperature=temperature,
                 max_tokens=max_tokens,
                 frequency_penalty=frequency_penalty,
                 presence_penalty=presence_penalty,
                 timeout=60,
-                stop=['}']
+                stop=['}'],
             )
         except openai.OpenAIError as e:
             raise Exception(f"ChatGPT could not complete the request: {str(e)}")
 
         answer = None
         try:
-            answer = response["choices"][0]["text"]
+            answer = response.choices[0]["message"]["content"]
         except (KeyError, IndexError) as e:
             pass
 
