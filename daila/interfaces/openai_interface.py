@@ -6,10 +6,6 @@ import json
 from functools import wraps
 
 import openai
-from binsync.data import (
-    Function
-)
-
 
 from .generic_ai_interface import GenericAIInterface
 from ..utils import HYPERLINK_REGEX
@@ -156,11 +152,12 @@ class OpenAIInterface(GenericAIInterface):
         return resp
 
     def query_openai_for_function(
-        self, func_addr: int, prompt: str, replace_decompilation=True, json_response=False, increase_new_text=True
+        self, func_addr: int, prompt: str, replace_decompilation=True, json_response=False, increase_new_text=True,
+        **kwargs
     ):
         default_response = {} if json_response else None
         if replace_decompilation:
-            decompilation = self._decompile(func_addr)
+            decompilation = self._decompile(func_addr, **kwargs)
             if not decompilation:
                 return default_response
 
@@ -188,7 +185,7 @@ class OpenAIInterface(GenericAIInterface):
 
     @addr_ctx_when_none
     def summarize_function(self, *args, func_addr=None, decompilation=None, edit_dec=False, **kwargs) -> str:
-        resp = self.query_for_cmd(self.SUMMARIZE_CMD, func_addr=func_addr, decompilation=decompilation)
+        resp = self.query_for_cmd(self.SUMMARIZE_CMD, func_addr=func_addr, decompilation=decompilation, **kwargs)
         if edit_dec and resp:
             self._cmt_func(func_addr, resp)
 
@@ -196,7 +193,7 @@ class OpenAIInterface(GenericAIInterface):
 
     @addr_ctx_when_none
     def find_vulnerability_in_function(self, *args, func_addr=None, decompilation=None, edit_dec=False, **kwargs) -> str:
-        resp = self.query_for_cmd(self.FIND_VULN_CMD, func_addr=func_addr, decompilation=decompilation)
+        resp = self.query_for_cmd(self.FIND_VULN_CMD, func_addr=func_addr, decompilation=decompilation, **kwargs)
         if edit_dec and resp:
             self._cmt_func(func_addr, resp)
 
@@ -204,30 +201,39 @@ class OpenAIInterface(GenericAIInterface):
 
     @addr_ctx_when_none
     def find_source_of_function(self, *args, func_addr=None, decompilation=None, edit_dec=False, **kwargs) -> str:
-        resp = self.query_for_cmd(self.ID_SOURCE_CMD, func_addr=func_addr, decompilation=decompilation)
-        if edit_dec and resp:
-            self._cmt_func(func_addr, resp)
+        resp = self.query_for_cmd(self.ID_SOURCE_CMD, func_addr=func_addr, decompilation=decompilation, **kwargs)
+        links = re.findall(HYPERLINK_REGEX, resp)
+        if not links:
+            return ""
 
-        return resp
+        links = str(links)
+        if edit_dec:
+            self._cmt_func(func_addr, links)
+
+        return links
 
     @addr_ctx_when_none
     def rename_functions_in_function(self, *args, func_addr=None, decompilation=None, edit_dec=False, **kwargs) -> dict:
-        resp: Dict = self.query_for_cmd(self.RENAME_FUNCS_CMD, func_addr=func_addr, decompilation=decompilation)
+        resp: Dict = self.query_for_cmd(self.RENAME_FUNCS_CMD, func_addr=func_addr, decompilation=decompilation, **kwargs)
         if edit_dec and resp:
+            # TODO: reimplement this code with self.decompiler_controller.set_function(func)
+            """
             for addr, _ in self.decompiler_controller.functions().items():
                 func = self.decompiler_controller.functions(addr)
                 if func.name in resp:
                     new_name = resp[func.name]
                     func.name = new_name
-                    # TODO change this
                     self.decompiler_controller.fill_function(artifact=func)
+            """
         
         return resp
 
     @addr_ctx_when_none
     def rename_variables_in_function(self, *args, func_addr=None, decompilation=None, edit_dec=False, **kwargs) -> dict:
-        resp: Dict = self.query_for_cmd(self.RENAME_VARS_CMD, func_addr=func_addr, decompilation=decompilation)
+        resp: Dict = self.query_for_cmd(self.RENAME_VARS_CMD, func_addr=func_addr, decompilation=decompilation, **kwargs)
         if edit_dec and resp:
+            # TODO: reimplement this code with self.decompiler_controller.set_function(func)
+            """
             func = self.decompiler_controller.function(func_addr)
             if func:
                 updates = False
@@ -240,15 +246,17 @@ class OpenAIInterface(GenericAIInterface):
                         updates = True
                 
                 if updates:
-                    # TODO change this
                     self.decompiler_controller.fill_function(artifact=func)
+            """
         
         return resp
 
     @addr_ctx_when_none
     def retype_variables_in_function(self, *args, func_addr=None, decompilation=None, edit_dec=False, **kwargs) -> dict:
-        resp: Dict = self.query_for_cmd(self.RETYPE_VARS_CMD, func_addr=func_addr, decompilation=decompilation)
+        resp: Dict = self.query_for_cmd(self.RETYPE_VARS_CMD, func_addr=func_addr, decompilation=decompilation, **kwargs)
         if edit_dec and resp:
+            # TODO: reimplement this code with self.decompiler_controller.set_function(func)
+            """
             func = self.decompiler_controller.function(func_addr)
             if func:
                 updates = False
@@ -261,7 +269,7 @@ class OpenAIInterface(GenericAIInterface):
                         updates = True
 
                 if updates:
-                    # TODO change this
                     self.decompiler_controller.fill_function(artifact=func)
+            """
 
         return resp

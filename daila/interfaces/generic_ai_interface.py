@@ -23,8 +23,5 @@ class GenericAIInterface:
     def _register_menu_item(self, name, action_string, callback_func):
         return False
 
-    def _rename_variables_by_name(self, func_addr: int, names: Dict[str, str]):
-        return False
-
     def ask_api_key(self):
         pass

@@ -41,8 +41,8 @@ class DAILAServer:
         if not decompilation:
             return ""
 
-        success, result = self.controller.identify_decompilation(None, dec=decompilation)
-        if not success or not isinstance(result, str):
+        result = self.controller.find_source_of_function(decompilation=decompilation)
+        if not result:
             return ""
 
         return result
@@ -52,8 +52,8 @@ class DAILAServer:
         if not decompilation:
             return ""
 
-        success, result = self.controller.explain_decompilation(None, dec=decompilation)
-        if not success or not isinstance(result, str):
+        result = self.controller.summarize_function(decompilation=decompilation)
+        if not result:
             return ""
 
         return result
@@ -63,8 +63,8 @@ class DAILAServer:
         if not decompilation:
             return ""
 
-        success, result = self.controller.find_vuln_decompilation(None, dec=decompilation)
-        if not success or not isinstance(result, str):
+        result = self.controller.find_vulnerability_in_function(decompilation=decompilation)
+        if not result:
             return ""
 
         return result
@@ -74,11 +74,11 @@ class DAILAServer:
         if not decompilation:
             return ""
 
-        success, result = self.controller.rename_variables(None, dec=decompilation)
-        if not success or not isinstance(result, str):
+        result = self.controller.rename_variables_in_function(decompilation=decompilation)
+        if not result:
             return ""
 
-        return result
+        return str(result)
 
     def set_api_key(self, api_key: str):
         if api_key:
