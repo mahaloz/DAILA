@@ -2,12 +2,6 @@ from daila.interfaces.openai_interface import OpenAIInterface
 from xmlrpc.server import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 from functools import wraps
 
-"""
-What you want:
-- Start a server that allows somone to send decomplation
-- You send back identification string 
-"""
-
 class RequestHandler(SimpleXMLRPCRequestHandler):
     rpc_paths = ("/RPC2",)
 
@@ -18,7 +12,6 @@ def proxy_and_catch(func):
         if not args or not args[0]:
             return ""
 
-        output = ""
         try:
             output = func(self, *args, **kwargs)
         except Exception as e:

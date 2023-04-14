@@ -3,6 +3,7 @@ from typing import Optional, Dict
 import os
 import textwrap
 import json
+from functools import wraps
 
 import openai
 from binsync.data import (
@@ -14,6 +15,18 @@ from .generic_ai_interface import GenericAIInterface
 from ..utils import HYPERLINK_REGEX
 
 
+def addr_ctx_when_none(f):
+    @wraps(f)
+    def _addr_ctx_when_none(self: "OpenAIInterface", *args, **kwargs):
+        func_addr = kwargs.get("func_addr", None)
+        if func_addr is None:
+            func_addr = self._current_function_addr()
+            kwargs.update({"func_addr": func_addr, "edit_dec": True})
+        
+        return f(self, *args, **kwargs)
+    return _addr_ctx_when_none
+
+
 class OpenAIInterface(GenericAIInterface):
     # API Command Constants
     SUMMARIZE_CMD = "daila_summarize"
@@ -22,13 +35,7 @@ class OpenAIInterface(GenericAIInterface):
     RETYPE_VARS_CMD = "daila_retype_vars"
     FIND_VULN_CMD = "daila_find_vuln"
     ID_SOURCE_CMD = "daila_id_source"
-
-    # Replacement strings for API calls
-    REPLACEMENT_LABEL = "<DECOMPILATION>"
-    DECOMP_TEXT = f"\n\"\"\"{REPLACEMENT_LABEL}\"\"\""
-
-    # Commands:
-    COMMANDS = {
+    COMMANDS_WITH_ARGS = {
         SUMMARIZE_CMD: {},
         RENAME_VARS_CMD: {"json_response": True},
         RENAME_FUNCS_CMD: {"json_response": True},
@@ -37,6 +44,9 @@ class OpenAIInterface(GenericAIInterface):
         ID_SOURCE_CMD: {"increase_new_text": False}
     }
 
+    # replacement strings for API calls
+    REPLACEMENT_LABEL = "<DECOMPILATION>"
+    DECOMP_TEXT = f"\n\"\"\"{REPLACEMENT_LABEL}\"\"\""
     PROMPTS = {
         SUMMARIZE_CMD: f"Please summarize the following code:{DECOMP_TEXT}",
         RENAME_FUNCS_CMD: "Rename the functions in this code. Reply with only a JSON array where keys are the "
@@ -55,25 +65,24 @@ class OpenAIInterface(GenericAIInterface):
 
     def __init__(self, openai_api_key=None, model="gpt-3.5-turbo"):
         super().__init__()
-
         self.model = model
-        self.menu_operations = {
-            "daila:get_key": ("Update OpenAPI Key...", self.ask_api_key),
-            "daila:identify_func": ("Identify the source of the current function", self.identify_current_function),
-            "daila:explain_func": ("Explain what the current function does", self.explain_current_function),
-            "daila:find_vuln_func": ("Find the vuln in the current function", self.find_vuln_current_function),
-            "daila:rename_vars": ("Rename variables to better names", self.rename_variables_current_function),
+
+        self.menu_commands = {
+            "daila_set_key": ("Update OpenAPI Key...", self.ask_api_key),
+            f"{self.ID_SOURCE_CMD}": ("Identify the source code", self.find_source_of_function),
+            f"{self.SUMMARIZE_CMD}": ("Summarize function", self.summarize_function),
+            f"{self.FIND_VULN_CMD}": ("Find vulnerabilities", self.find_vulnerability_in_function),
+            f"{self.RENAME_FUNCS_CMD}": ("Rename functions used in function", self.rename_functions_in_function),
+            f"{self.RENAME_VARS_CMD}": ("Rename variables in function", self.rename_variables_in_function),
+            f"{self.RETYPE_VARS_CMD}": ("Retype variables in function", self.retype_variables_in_function),
         }
-        for menu_str, callback_info in self.menu_operations.items():
+
+        for menu_str, callback_info in self.menu_commands.items():
             callback_str, callback_func = callback_info
             self._register_menu_item(menu_str, callback_str, callback_func)
 
         self._api_key = os.getenv("OPENAI_API_KEY") or openai_api_key
         openai.api_key = self._api_key
-
-    #
-    # OpenAI Interface
-    #
 
     @property
     def api_key(self):
@@ -83,6 +92,10 @@ class OpenAIInterface(GenericAIInterface):
     def api_key(self, data):
         self._api_key = data
         openai.api_key = self._api_key
+
+    #
+    # OpenAI Interface
+    #
 
     def _query_openai_model(
             self,
@@ -155,11 +168,11 @@ class OpenAIInterface(GenericAIInterface):
 
         return self._query_openai(prompt, json_response=json_response, increase_new_text=increase_new_text)
 
-    def query_for_cmd(self, cmd, func_addr=None, decompilation=None):
-        if cmd not in self.COMMANDS:
+    def query_for_cmd(self, cmd, func_addr=None, decompilation=None, edit_dec=False):
+        if cmd not in self.COMMANDS_WITH_ARGS:
             raise ValueError(f"Command {cmd} is not supported")
 
-        kwargs = self.COMMANDS[cmd]
+        kwargs = self.COMMANDS_WITH_ARGS[cmd]
         if func_addr is None and decompilation is None:
             raise Exception(f"You must provide either a function address or decompilation!")
 
@@ -173,65 +186,82 @@ class OpenAIInterface(GenericAIInterface):
     # API Alias Wrappers
     #
 
-    def summarize_function(self, func_addr=None, decompilation=None) -> str:
-        return self.query_for_cmd(self.SUMMARIZE_CMD, func_addr=func_addr, decompilation=decompilation)
+    @addr_ctx_when_none
+    def summarize_function(self, *args, func_addr=None, decompilation=None, edit_dec=False, **kwargs) -> str:
+        resp = self.query_for_cmd(self.SUMMARIZE_CMD, func_addr=func_addr, decompilation=decompilation)
+        if edit_dec and resp:
+            self._cmt_func(func_addr, resp)
 
-    def find_vulnerability_in_function(self, func_addr=None, decompilation=None) -> str:
-        return self.query_for_cmd(self.FIND_VULN_CMD, func_addr=func_addr, decompilation=decompilation)
+        return resp
 
-    def find_source_of_in_function(self, func_addr=None, decompilation=None) -> str:
-        return self.query_for_cmd(self.ID_SOURCE_CMD, func_addr=func_addr, decompilation=decompilation)
+    @addr_ctx_when_none
+    def find_vulnerability_in_function(self, *args, func_addr=None, decompilation=None, edit_dec=False, **kwargs) -> str:
+        resp = self.query_for_cmd(self.FIND_VULN_CMD, func_addr=func_addr, decompilation=decompilation)
+        if edit_dec and resp:
+            self._cmt_func(func_addr, resp)
 
-    def rename_functions_in_function(self, func_addr=None, decompilation=None) -> dict:
-        return self.query_for_cmd(self.RENAME_FUNCS_CMD, func_addr=func_addr, decompilation=decompilation)
+        return resp
 
-    def rename_variables_in_function(self, func_addr=None, decompilation=None) -> dict:
-        return self.query_for_cmd(self.RENAME_VARS_CMD, func_addr=func_addr, decompilation=decompilation)
+    @addr_ctx_when_none
+    def find_source_of_function(self, *args, func_addr=None, decompilation=None, edit_dec=False, **kwargs) -> str:
+        resp = self.query_for_cmd(self.ID_SOURCE_CMD, func_addr=func_addr, decompilation=decompilation)
+        if edit_dec and resp:
+            self._cmt_func(func_addr, resp)
 
-    def retype_variables_in_function(self, func_addr=None, decompilation=None) -> dict:
-        return self.query_for_cmd(self.RETYPE_VARS_CMD, func_addr=func_addr, decompilation=decompilation)
+        return resp
 
-    #
-    # API In-Place editors
-    #
+    @addr_ctx_when_none
+    def rename_functions_in_function(self, *args, func_addr=None, decompilation=None, edit_dec=False, **kwargs) -> dict:
+        resp: Dict = self.query_for_cmd(self.RENAME_FUNCS_CMD, func_addr=func_addr, decompilation=decompilation)
+        if edit_dec and resp:
+            for addr, _ in self.decompiler_controller.functions().items():
+                func = self.decompiler_controller.functions(addr)
+                if func.name in resp:
+                    new_name = resp[func.name]
+                    func.name = new_name
+                    # TODO change this
+                    self.decompiler_controller.fill_function(artifact=func)
+        
+        return resp
 
-    def rename_variables(self, func_addr, dec=None, **kwargs):
-        dec = dec or self._decompile(func_addr, **kwargs)
-        if not dec:
-            return False, None
+    @addr_ctx_when_none
+    def rename_variables_in_function(self, *args, func_addr=None, decompilation=None, edit_dec=False, **kwargs) -> dict:
+        resp: Dict = self.query_for_cmd(self.RENAME_VARS_CMD, func_addr=func_addr, decompilation=decompilation)
+        if edit_dec and resp:
+            func = self.decompiler_controller.function(func_addr)
+            if func:
+                updates = False
+                for soff in func.stack_vars:
+                    svar = func.stack_vars[soff]
+                    if svar.name in resp:
+                        new_name = resp[svar.name]
+                        svar.name = new_name
+                        func.stack_vars[soff] = svar
+                        updates = True
+                
+                if updates:
+                    # TODO change this
+                    self.decompiler_controller.fill_function(artifact=func)
+        
+        return resp
 
-        response: Optional[str] = self._ask_openai(
-            'Analyze what the following function does. Suggest better variable names and its own function name. Do not suggest names for inside functions. Reply whit a JSON array where keys are the original names and values are the propossed names:\n'
-            f'{dec}'
-            '"""',
-            temperature=0.6,
-            max_tokens=512,
-            frequency_penalty=1,
-            presence_penalty=1
-        )
+    @addr_ctx_when_none
+    def retype_variables_in_function(self, *args, func_addr=None, decompilation=None, edit_dec=False, **kwargs) -> dict:
+        resp: Dict = self.query_for_cmd(self.RETYPE_VARS_CMD, func_addr=func_addr, decompilation=decompilation)
+        if edit_dec and resp:
+            func = self.decompiler_controller.function(func_addr)
+            if func:
+                updates = False
+                for soff in func.stack_vars:
+                    svar = func.stack_vars[soff]
+                    if svar.type in resp:
+                        new_type = resp[svar.type]
+                        svar.type = new_type
+                        func.stack_vars[soff] = svar
+                        updates = True
 
-        if response is None:
-            return False, None
+                if updates:
+                    # TODO change this
+                    self.decompiler_controller.fill_function(artifact=func)
 
-        # patch the output, since it can be weird sometimes
-        if "}" not in response:
-            response += "}"
-
-        try:
-            var_map = json.loads(response)
-        except Exception:
-            var_map = None
-
-        update = False
-        if isinstance(var_map, dict):
-            update = self._rename_variables_by_name(func_addr, var_map)
-
-        return update
-
-    def rename_variables_current_function(self, *args, **kwargs):
-        func_addr = self._current_function_addr(**kwargs)
-        if func_addr is None:
-            return False
-
-        success = self.rename_variables(func_addr, **kwargs)
-        return success
+        return resp

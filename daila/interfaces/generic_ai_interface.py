@@ -28,4 +28,3 @@ class GenericAIInterface:
 
     def ask_api_key(self):
         pass
-
