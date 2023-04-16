@@ -8,7 +8,7 @@ from binaryninja.enums import DisassemblyOption, LinearDisassemblyLineType, Inst
 from PySide6.QtWidgets import QProgressDialog
 
 
-from daila.controller import DAILAController
+from daila.interfaces.openai_interface import OpenAIInterface, addr_ctx_when_none
 
 
 def with_loading_popup(func):
@@ -30,7 +30,7 @@ def with_loading_popup(func):
     return _with_loading_popup
 
 
-class BinjaDAILAController(DAILAController):
+class BinjaOpenAIInterface(OpenAIInterface):
     def __init__(self, bv=None, plugin=None):
         self.bv = bv
         self.plugin = plugin
@@ -107,24 +107,27 @@ class BinjaDAILAController(DAILAController):
         self.api_key = resp.decode()
 
     @with_loading_popup
-    def identify_current_function(self, *args, **kwargs):
+    @addr_ctx_when_none
+    def find_source_of_function(self, *args, **kwargs) -> str:
         bv, address = args[0:2]
-        super().identify_current_function(address=address, bv=bv)
+        return super().find_source_of_function(func_addr=address, bv=bv)
 
     @with_loading_popup
-    def explain_current_function(self, *args, **kwargs):
+    @addr_ctx_when_none
+    def summarize_function(self, *args, **kwargs) -> str:
         bv, address = args[0:2]
-        super().explain_current_function(address=address, bv=bv)
+        return super().summarize_function(func_addr=address, bv=bv)
 
     @with_loading_popup
-    def find_vuln_current_function(self, *args, **kwargs):
+    @addr_ctx_when_none
+    def find_vulnerability_in_function(self, *args, **kwargs) -> str:
         bv, address = args[0:2]
-        super().find_vuln_current_function(address=address, bv=bv)
+        return super().find_vulnerability_in_function(func_addr=address, bv=bv)
 
 
 class DAILAPlugin:
     def __init__(self):
-        self.controller = BinjaDAILAController(plugin=self)
+        self.controller = BinjaOpenAIInterface(plugin=self)
 
     @staticmethod
     def get_func(bv, address):
