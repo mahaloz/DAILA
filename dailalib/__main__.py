@@ -11,7 +11,7 @@ def main():
             """,
         epilog="""
             Examples:
-            dailalib --install
+            daila --install
             """
     )
     parser.add_argument(
