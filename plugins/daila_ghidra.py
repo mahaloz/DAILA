@@ -64,7 +64,7 @@ class ServerCtx:
         self._stop_server()
 
     def _start_server(self):
-        self.server_proc = subprocess.Popen(["python3", "-m", "daila", "-server"])
+        self.server_proc = subprocess.Popen(["python3", "-m", "dailalib", "-server"])
         sleep(3)
         self.server = xmlrpclib.ServerProxy(self.proxy_host)
 

@@ -7,7 +7,7 @@ Utilize OpenAI to improve your decompilation experience in most modern decompile
 ## Installation
 Clone down this repo and pip install and use the daila installer:
 ```bash
-pip3 install -e . && daila --install 
+pip3 install -e . && dailalib --install 
 ```
 
 Depending on your decompiler, this will attempt to copy the script files into your decompiler and install

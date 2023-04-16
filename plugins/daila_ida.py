@@ -7,7 +7,7 @@ import ida_hexrays
 import idc
 from PyQt5.QtWidgets import QProgressDialog
 
-from daila.interfaces.openai_interface import OpenAIInterface
+from dailalib.interfaces.openai_interface import OpenAIInterface
 
 controller: Optional["IDADAILAController"] = None
 
@@ -80,7 +80,7 @@ class DAILAPlugin(idaapi.plugin_t):
     help = "DAILA Help"
     wanted_name = "Identify the current function you are looking at!"
 
-    id_action_name = "daila:identify_function"
+    id_action_name = "dailalib:identify_function"
     id_menu_path = "Edit/DAILA/Explain function"
 
     def __init__(self, *args, **kwargs):
