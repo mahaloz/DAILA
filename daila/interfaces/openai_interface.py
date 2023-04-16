@@ -31,13 +31,13 @@ class OpenAIInterface(GenericAIInterface):
     RETYPE_VARS_CMD = "daila_retype_vars"
     FIND_VULN_CMD = "daila_find_vuln"
     ID_SOURCE_CMD = "daila_id_source"
-    COMMANDS_WITH_ARGS = {
-        SUMMARIZE_CMD: {},
+    AI_COMMANDS = {
         RENAME_VARS_CMD: {"json_response": True},
-        RENAME_FUNCS_CMD: {"json_response": True},
         RETYPE_VARS_CMD: {"json_response": True},
+        SUMMARIZE_CMD: {},
+        RENAME_FUNCS_CMD: {"json_response": True},
+        ID_SOURCE_CMD: {"increase_new_text": False},
         FIND_VULN_CMD: {},
-        ID_SOURCE_CMD: {"increase_new_text": False}
     }
 
     # replacement strings for API calls
@@ -59,8 +59,8 @@ class OpenAIInterface(GenericAIInterface):
                        f"package name:{DECOMP_TEXT}",
     }
 
-    def __init__(self, openai_api_key=None, model="gpt-3.5-turbo"):
-        super().__init__()
+    def __init__(self, openai_api_key=None, model="gpt-3.5-turbo", decompiler_controller=None):
+        super().__init__(decompiler_controller=decompiler_controller)
         self.model = model
 
         self.menu_commands = {
@@ -154,11 +154,11 @@ class OpenAIInterface(GenericAIInterface):
         return resp
 
     def query_openai_for_function(
-        self, func_addr: int, prompt: str, replace_decompilation=True, json_response=False, increase_new_text=True,
+        self, func_addr: int, prompt: str, decompile=True, json_response=False, increase_new_text=True,
         **kwargs
     ):
         default_response = {} if json_response else None
-        if replace_decompilation:
+        if decompile:
             decompilation = self._decompile(func_addr, **kwargs)
             if not decompilation:
                 return default_response
@@ -168,18 +168,18 @@ class OpenAIInterface(GenericAIInterface):
         return self._query_openai(prompt, json_response=json_response, increase_new_text=increase_new_text)
 
     def query_for_cmd(self, cmd, func_addr=None, decompilation=None, edit_dec=False):
-        if cmd not in self.COMMANDS_WITH_ARGS:
+        if cmd not in self.AI_COMMANDS:
             raise ValueError(f"Command {cmd} is not supported")
 
-        kwargs = self.COMMANDS_WITH_ARGS[cmd]
+        kwargs = self.AI_COMMANDS[cmd]
         if func_addr is None and decompilation is None:
             raise Exception(f"You must provide either a function address or decompilation!")
 
         prompt = self.PROMPTS[cmd]
         if decompilation is not None:
-            prompt.replace(self.REPLACEMENT_LABEL, decompilation)
+            prompt = prompt.replace(self.REPLACEMENT_LABEL, decompilation)
 
-        return self.query_openai_for_function(func_addr, prompt, replace_decompilation=decompilation is None, **kwargs)
+        return self.query_openai_for_function(func_addr, prompt, decompile=decompilation is None, **kwargs)
 
     #
     # API Alias Wrappers
@@ -188,6 +188,9 @@ class OpenAIInterface(GenericAIInterface):
     @addr_ctx_when_none
     def summarize_function(self, *args, func_addr=None, decompilation=None, edit_dec=False, **kwargs) -> str:
         resp = self.query_for_cmd(self.SUMMARIZE_CMD, func_addr=func_addr, decompilation=decompilation, **kwargs)
+        if resp:
+            resp = f"\nGuessed Summarization:\n{resp}"
+        
         if edit_dec and resp:
             self._cmt_func(func_addr, resp)
 
@@ -196,6 +199,9 @@ class OpenAIInterface(GenericAIInterface):
     @addr_ctx_when_none
     def find_vulnerability_in_function(self, *args, func_addr=None, decompilation=None, edit_dec=False, **kwargs) -> str:
         resp = self.query_for_cmd(self.FIND_VULN_CMD, func_addr=func_addr, decompilation=decompilation, **kwargs)
+        if resp:
+            resp = f"\nGuessed Vuln:\n{resp}" 
+        
         if edit_dec and resp:
             self._cmt_func(func_addr, resp)
 
@@ -208,11 +214,11 @@ class OpenAIInterface(GenericAIInterface):
         if not links:
             return ""
 
-        links = str(links)
+        resp = f"\nGuessed Source:\n{links}"
         if edit_dec:
-            self._cmt_func(func_addr, links)
+            self._cmt_func(func_addr, resp)
 
-        return links
+        return resp
 
     @addr_ctx_when_none
     def rename_functions_in_function(self, *args, func_addr=None, decompilation=None, edit_dec=False, **kwargs) -> dict:
@@ -264,8 +270,8 @@ class OpenAIInterface(GenericAIInterface):
                 updates = False
                 for soff in func.stack_vars:
                     svar = func.stack_vars[soff]
-                    if svar.type in resp:
-                        new_type = resp[svar.type]
+                    if svar.name in resp:
+                        new_type = resp[svar.name]
                         svar.type = new_type
                         func.stack_vars[soff] = svar
                         updates = True
