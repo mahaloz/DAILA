@@ -13,7 +13,7 @@ from setuptools.command.develop import develop as st_develop
 
 def _copy_plugins():
     local_plugins = Path("plugins").absolute()
-    daila_loc = Path("daila").absolute()
+    daila_loc = Path("dailalib").absolute()
     pip_e_plugins = daila_loc.joinpath("plugins").absolute()
 
     # clean the install location of symlink or folder
@@ -32,7 +32,7 @@ def _copy_plugins():
 
     # copy if symlinking is not available on target system
     try:
-        shutil.copytree("plugins", "daila/plugins")
+        shutil.copytree("plugins", "dailalib/plugins")
     except:
         pass
 
