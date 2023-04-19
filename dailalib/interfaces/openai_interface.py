@@ -102,16 +102,14 @@ class OpenAIInterface(GenericAIInterface):
         frequency_penalty=0,
         presence_penalty=0
     ):
+        # TODO: at some point add back frequency_penalty and presence_penalty to be used
         try:
             response = openai.ChatCompletion.create(
                 model=model or self.model,
                 messages=[
                     {"role": "user", "content": question}
                 ],
-                temperature=temperature,
                 max_tokens=max_tokens,
-                frequency_penalty=frequency_penalty,
-                presence_penalty=presence_penalty,
                 timeout=60,
                 stop=['}'],
             )
