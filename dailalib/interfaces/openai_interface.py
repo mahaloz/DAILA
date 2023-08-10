@@ -23,6 +23,11 @@ def addr_ctx_when_none(f):
     return _addr_ctx_when_none
 
 
+QUESTION_START = "Q>"
+QUESTION_REGEX = re.compile(rf"({QUESTION_START})([^?]*\?)")
+ANSWER_START = "A>"
+
+
 class OpenAIInterface(GenericAIInterface):
     # API Command Constants
     SUMMARIZE_CMD = "daila_summarize"
@@ -31,6 +36,7 @@ class OpenAIInterface(GenericAIInterface):
     RETYPE_VARS_CMD = "daila_retype_vars"
     FIND_VULN_CMD = "daila_find_vuln"
     ID_SOURCE_CMD = "daila_id_source"
+    ANSWER_QUESTION_CMD = "daila_answer_question"
     AI_COMMANDS = {
         RENAME_VARS_CMD: {"json_response": True},
         RETYPE_VARS_CMD: {"json_response": True},
@@ -38,11 +44,14 @@ class OpenAIInterface(GenericAIInterface):
         RENAME_FUNCS_CMD: {"json_response": True},
         ID_SOURCE_CMD: {"increase_new_text": False},
         FIND_VULN_CMD: {},
+        ANSWER_QUESTION_CMD: {"extra_handler": "answer_questions_in_decompilation"},
     }
 
     # replacement strings for API calls
-    REPLACEMENT_LABEL = "<DECOMPILATION>"
-    DECOMP_TEXT = f"\n\"\"\"{REPLACEMENT_LABEL}\"\"\""
+    DECOMP_REPLACEMENT_LABEL = "<DECOMPILATION>"
+    SNIPPET_REPLACEMENT_LABEL = "<SNIPPET>"
+    SNIPPET_TEXT = f"\n\"\"\"{SNIPPET_REPLACEMENT_LABEL}\"\"\""
+    DECOMP_TEXT = f"\n\"\"\"{DECOMP_REPLACEMENT_LABEL}\"\"\""
     PROMPTS = {
         SUMMARIZE_CMD: f"Please summarize the following code:{DECOMP_TEXT}",
         RENAME_FUNCS_CMD: "Rename the functions in this code. Reply with only a JSON array where keys are the "
@@ -57,9 +66,13 @@ class OpenAIInterface(GenericAIInterface):
                        f"possible way to exploit it?{DECOMP_TEXT}",
         ID_SOURCE_CMD: "What open source project is this code from. Please only give me the program name and "
                        f"package name:{DECOMP_TEXT}",
+        ANSWER_QUESTION_CMD: "You are a code comprehension assistant. You answer questions based on code that is "
+                             f"provided. Here is some code: {DECOMP_TEXT}. Focus on this snippet of the code: "
+                             f"{SNIPPET_TEXT}\n\n Answer the following question as concisely as possible, guesses "
+                             f"are ok: "
     }
 
-    def __init__(self, openai_api_key=None, model="gpt-3.5-turbo", decompiler_controller=None):
+    def __init__(self, openai_api_key=None, model="gpt-4", decompiler_controller=None):
         super().__init__(decompiler_controller=decompiler_controller)
         self.model = model
 
@@ -71,6 +84,7 @@ class OpenAIInterface(GenericAIInterface):
             f"{self.RENAME_FUNCS_CMD}": ("Rename functions used in function", self.rename_functions_in_function),
             f"{self.RENAME_VARS_CMD}": ("Rename variables in function", self.rename_variables_in_function),
             f"{self.RETYPE_VARS_CMD}": ("Retype variables in function", self.retype_variables_in_function),
+            f"{self.ANSWER_QUESTION_CMD}": ("Answer questions in function", self.answer_questions),
         }
 
         for menu_str, callback_info in self.menu_commands.items():
@@ -124,7 +138,7 @@ class OpenAIInterface(GenericAIInterface):
 
         return answer
 
-    def _query_openai(self, prompt: str, json_response=False, increase_new_text=True):
+    def _query_openai(self, prompt: str, json_response=False, increase_new_text=True, **kwargs):
         freq_penalty = 0
         pres_penalty = 0
         default_response = {} if json_response else None
@@ -161,9 +175,16 @@ class OpenAIInterface(GenericAIInterface):
             if not decompilation:
                 return default_response
 
-            prompt = prompt.replace(self.REPLACEMENT_LABEL, decompilation)
+            prompt = prompt.replace(self.DECOMP_REPLACEMENT_LABEL, decompilation)
+        else:
+            decompilation = kwargs.get("decompilation", None)
 
-        return self._query_openai(prompt, json_response=json_response, increase_new_text=increase_new_text)
+        if "extra_handler" in kwargs:
+            extra_handler = getattr(self, kwargs.pop("extra_handler"))
+            kwargs["decompilation"] = decompilation
+            return extra_handler(func_addr, prompt, **kwargs)
+        else:
+            return self._query_openai(prompt, json_response=json_response, increase_new_text=increase_new_text)
 
     def query_for_cmd(self, cmd, func_addr=None, decompilation=None, edit_dec=False):
         if cmd not in self.AI_COMMANDS:
@@ -175,13 +196,75 @@ class OpenAIInterface(GenericAIInterface):
 
         prompt = self.PROMPTS[cmd]
         if decompilation is not None:
-            prompt = prompt.replace(self.REPLACEMENT_LABEL, decompilation)
+            prompt = prompt.replace(self.DECOMP_REPLACEMENT_LABEL, decompilation)
 
-        return self.query_openai_for_function(func_addr, prompt, decompile=decompilation is None, **kwargs)
+        return self.query_openai_for_function(func_addr, prompt, decompile=decompilation is None, decompilation=decompilation, **kwargs)
+
+    #
+    # Extra Handlers
+    #
+
+    def answer_questions_in_decompilation(self, func_addr, prompt: str, context_window=25, **kwargs) -> Dict[str, str]:
+        questions = [m for m in QUESTION_REGEX.finditer(prompt)]
+        if not questions:
+            return {}
+
+        decompilation = kwargs.get("decompilation", None)
+        if decompilation is None:
+            print("Decompilation is required for answering questions!")
+            return {}
+
+        dec_lines = decompilation.split("\n")
+        snippets = {}
+        for question in questions:
+            full_str = question.group(0)
+            for i, line in enumerate(dec_lines):
+                if full_str in line:
+                    break
+            else:
+                snippets[full_str] = None
+                continue
+
+            context_window_lines = dec_lines[i+1:i+1+context_window]
+            snippets[full_str] = "\n".join(context_window_lines)
+
+        answers = {}
+        for question in questions:
+            full_str = question.group(0)
+            question_str = question.group(2)
+            snippet = snippets.get(full_str, None)
+
+            if snippet is None:
+                continue
+
+            if full_str.endswith("X?"):
+                normalized_prompt = question_str.replace("X?", "?")
+            else:
+                normalized_prompt = prompt.replace(self.SNIPPET_REPLACEMENT_LABEL, snippet) + question_str
+
+            answer = self.query_openai_for_function(
+                func_addr, normalized_prompt, decompile=False, **kwargs
+            )
+            if answer is not None:
+                answers[full_str] = f"A> {answer}"
+
+        return answers
 
     #
     # API Alias Wrappers
     #
+
+    @addr_ctx_when_none
+    def answer_questions(self, *args, func_addr=None, decompilation=None, edit_dec=False, **kwargs) -> Dict[str, str]:
+        resp = self.query_for_cmd(self.ANSWER_QUESTION_CMD, func_addr=func_addr, decompilation=decompilation, **kwargs)
+        if resp and edit_dec:
+            out = ""
+            for q, a in resp.items():
+                out += f"{q}\n{a}\n\n"
+
+            self._cmt_func(func_addr, out)
+
+        return resp
 
     @addr_ctx_when_none
     def summarize_function(self, *args, func_addr=None, decompilation=None, edit_dec=False, **kwargs) -> str:
@@ -231,6 +314,7 @@ class OpenAIInterface(GenericAIInterface):
                     func.name = new_name
                     self.decompiler_controller.fill_function(artifact=func)
             """
+            pass
         
         return resp
 
@@ -254,6 +338,7 @@ class OpenAIInterface(GenericAIInterface):
                 if updates:
                     self.decompiler_controller.fill_function(artifact=func)
             """
+            pass
         
         return resp
 
@@ -277,5 +362,6 @@ class OpenAIInterface(GenericAIInterface):
                 if updates:
                     self.decompiler_controller.fill_function(artifact=func)
             """
+            pass
 
         return resp
