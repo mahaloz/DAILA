@@ -6,6 +6,7 @@ import json
 from functools import wraps
 
 import openai
+import tiktoken
 
 from .generic_ai_interface import GenericAIInterface
 from ..utils import HYPERLINK_REGEX
@@ -18,15 +19,19 @@ def addr_ctx_when_none(f):
         if func_addr is None:
             func_addr = self._current_function_addr()
             kwargs.update({"func_addr": func_addr, "edit_dec": True})
-        
         return f(self, *args, **kwargs)
     return _addr_ctx_when_none
 
-
+JSON_REGEX = re.compile(r"\{.*\}", flags=re.DOTALL)
 QUESTION_START = "Q>"
 QUESTION_REGEX = re.compile(rf"({QUESTION_START})([^?]*\?)")
 ANSWER_START = "A>"
 
+DEFAULT_MODEL = "gpt-4"
+MODEL_TO_TOKENS = {
+    "gpt-4": 8000,
+    "gpt-3.5-turbo": 4096
+}
 
 class OpenAIInterface(GenericAIInterface):
     # API Command Constants
@@ -53,26 +58,26 @@ class OpenAIInterface(GenericAIInterface):
     SNIPPET_TEXT = f"\n\"\"\"{SNIPPET_REPLACEMENT_LABEL}\"\"\""
     DECOMP_TEXT = f"\n\"\"\"{DECOMP_REPLACEMENT_LABEL}\"\"\""
     PROMPTS = {
-        SUMMARIZE_CMD: f"Please summarize the following code:{DECOMP_TEXT}",
-        RENAME_FUNCS_CMD: "Rename the functions in this code. Reply with only a JSON array where keys are the "
-                          f"original names and values are the proposed names:{DECOMP_TEXT}",
         RENAME_VARS_CMD: "Analyze what the following function does. Suggest better variable names. "
                          "Reply with only a JSON array where keys are the original names and values are "
                          f"the proposed names:{DECOMP_TEXT}",
         RETYPE_VARS_CMD: "Analyze what the following function does. Suggest better C types for the variables. "
                          "Reply with only a JSON where keys are the original names and values are the "
                          f"proposed types: {DECOMP_TEXT}",
+        SUMMARIZE_CMD: f"Please summarize the following code:{DECOMP_TEXT}",
         FIND_VULN_CMD: "Can you find the vulnerability in the following function and suggest the "
                        f"possible way to exploit it?{DECOMP_TEXT}",
         ID_SOURCE_CMD: "What open source project is this code from. Please only give me the program name and "
                        f"package name:{DECOMP_TEXT}",
+        RENAME_FUNCS_CMD: "The following code is C/C++. Rename the function according to its purpose using underscore_case. Reply with only a JSON array where keys are the "
+                          f"original names and values are the proposed names:{DECOMP_TEXT}",
         ANSWER_QUESTION_CMD: "You are a code comprehension assistant. You answer questions based on code that is "
                              f"provided. Here is some code: {DECOMP_TEXT}. Focus on this snippet of the code: "
                              f"{SNIPPET_TEXT}\n\n Answer the following question as concisely as possible, guesses "
                              f"are ok: "
     }
 
-    def __init__(self, openai_api_key=None, model="gpt-4", decompiler_controller=None):
+    def __init__(self, openai_api_key=None, model=DEFAULT_MODEL, decompiler_controller=None):
         super().__init__(decompiler_controller=decompiler_controller)
         self.model = model
 
@@ -156,8 +161,13 @@ class OpenAIInterface(GenericAIInterface):
             if "}" not in resp:
                 resp += "}"
 
+            json_matches = JSON_REGEX.findall(resp)
+            if not json_matches:
+                return default_response
+
+            json_data = json_matches[0]
             try:
-                data = json.loads(resp)
+                data = json.loads(json_data)
             except Exception:
                 data = {}
 
@@ -306,14 +316,6 @@ class OpenAIInterface(GenericAIInterface):
         resp: Dict = self.query_for_cmd(self.RENAME_FUNCS_CMD, func_addr=func_addr, decompilation=decompilation, **kwargs)
         if edit_dec and resp:
             # TODO: reimplement this code with self.decompiler_controller.set_function(func)
-            """
-            for addr, _ in self.decompiler_controller.functions().items():
-                func = self.decompiler_controller.functions(addr)
-                if func.name in resp:
-                    new_name = resp[func.name]
-                    func.name = new_name
-                    self.decompiler_controller.fill_function(artifact=func)
-            """
             pass
         
         return resp
@@ -323,21 +325,6 @@ class OpenAIInterface(GenericAIInterface):
         resp: Dict = self.query_for_cmd(self.RENAME_VARS_CMD, func_addr=func_addr, decompilation=decompilation, **kwargs)
         if edit_dec and resp:
             # TODO: reimplement this code with self.decompiler_controller.set_function(func)
-            """
-            func = self.decompiler_controller.function(func_addr)
-            if func:
-                updates = False
-                for soff in func.stack_vars:
-                    svar = func.stack_vars[soff]
-                    if svar.name in resp:
-                        new_name = resp[svar.name]
-                        svar.name = new_name
-                        func.stack_vars[soff] = svar
-                        updates = True
-                
-                if updates:
-                    self.decompiler_controller.fill_function(artifact=func)
-            """
             pass
         
         return resp
@@ -347,21 +334,35 @@ class OpenAIInterface(GenericAIInterface):
         resp: Dict = self.query_for_cmd(self.RETYPE_VARS_CMD, func_addr=func_addr, decompilation=decompilation, **kwargs)
         if edit_dec and resp:
             # TODO: reimplement this code with self.decompiler_controller.set_function(func)
-            """
-            func = self.decompiler_controller.function(func_addr)
-            if func:
-                updates = False
-                for soff in func.stack_vars:
-                    svar = func.stack_vars[soff]
-                    if svar.name in resp:
-                        new_type = resp[svar.name]
-                        svar.type = new_type
-                        func.stack_vars[soff] = svar
-                        updates = True
-
-                if updates:
-                    self.decompiler_controller.fill_function(artifact=func)
-            """
             pass
 
         return resp
+
+    #
+    # helpers
+    #
+
+    @staticmethod
+    def estimate_token_amount(content: str, model=DEFAULT_MODEL):
+        enc = tiktoken.encoding_for_model(model)
+        tokens = enc.encode(content)
+        return len(tokens)
+
+    @staticmethod
+    def content_fits_tokens(content: str, model=DEFAULT_MODEL):
+        max_token_count = MODEL_TO_TOKENS[model]
+        token_count = OpenAIInterface.estimate_token_amount(content, model=model)
+        return token_count <= max_token_count - 1000
+
+    @staticmethod
+    def fit_decompilation_to_token_max(decompilation: str, delta_step=10, model=DEFAULT_MODEL):
+        if OpenAIInterface.content_fits_tokens(decompilation, model=model):
+            return decompilation
+
+        dec_lines = decompilation.split("\n")
+        last_idx = len(dec_lines) - 1
+        # should be: [func_prototype] + [nop] + [mid] + [nop] + [end_of_code]
+        dec_lines = dec_lines[0:2] + ["// ..."] + dec_lines[delta_step:last_idx-delta_step] + ["// ..."] + dec_lines[-2:-1]
+        decompilation = "\n".join(dec_lines)
+
+        return OpenAIInterface.fit_decompilation_to_token_max(decompilation, delta_step=delta_step, model=model)
