@@ -196,7 +196,7 @@ class OpenAIInterface(GenericAIInterface):
         else:
             return self._query_openai(prompt, json_response=json_response, increase_new_text=increase_new_text)
 
-    def query_for_cmd(self, cmd, func_addr=None, decompilation=None, edit_dec=False):
+    def query_for_cmd(self, cmd, func_addr=None, decompilation=None, edit_dec=False, **kwargs):
         if cmd not in self.AI_COMMANDS:
             raise ValueError(f"Command {cmd} is not supported")
 
