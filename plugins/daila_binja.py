@@ -44,9 +44,10 @@ class BinjaOpenAIInterface(OpenAIInterface):
         return addr
 
     def _decompile(self, func_addr: int, **kwargs):
-        bv = kwargs.get("bv", None)
+        bv = self.bv
         if bv is None:
-            return None
+            print("[DAILA] Warning: was unable to collect the current BinaryView. Please report this issue.")
+            return
 
         func = DAILAPlugin.get_func(bv, func_addr)
         if func is None:
@@ -81,7 +82,7 @@ class BinjaOpenAIInterface(OpenAIInterface):
         return decomp
 
     def _cmt_func(self, func_addr: int, comment: str, **kwargs):
-        bv = kwargs.get("bv", None)
+        bv = self.bv
         if bv is None:
             return None
 
@@ -110,19 +111,46 @@ class BinjaOpenAIInterface(OpenAIInterface):
     @addr_ctx_when_none
     def find_source_of_function(self, *args, **kwargs) -> str:
         bv, address = args[0:2]
-        return super().find_source_of_function(func_addr=address, bv=bv)
+        self.bv = bv
+        return super().find_source_of_function(func_addr=address, bv=bv, edit_dec=True)
 
     @with_loading_popup
     @addr_ctx_when_none
     def summarize_function(self, *args, **kwargs) -> str:
         bv, address = args[0:2]
-        return super().summarize_function(func_addr=address, bv=bv)
+        self.bv = bv
+        return super().summarize_function(func_addr=address, bv=bv, edit_dec=True)
 
     @with_loading_popup
     @addr_ctx_when_none
     def find_vulnerability_in_function(self, *args, **kwargs) -> str:
         bv, address = args[0:2]
-        return super().find_vulnerability_in_function(func_addr=address, bv=bv)
+        self.bv = bv
+        return super().find_vulnerability_in_function(func_addr=address, bv=bv, edit_dec=True)
+
+    @with_loading_popup
+    @addr_ctx_when_none
+    def answer_questions(self, *args, func_addr=None, decompilation=None, edit_dec=False, **kwargs):
+        bv, address = args[0:2]
+        self.bv = bv
+        return super().answer_questions(func_addr=address, bv=bv, edit_dec=True)
+
+    @with_loading_popup
+    @addr_ctx_when_none
+    def rename_functions_in_function(self, *args, func_addr=None, decompilation=None, edit_dec=False, **kwargs):
+        bv, address = args[0:2]
+        self.bv = bv
+        return super().rename_functions_in_function(func_addr=address, bv=bv, edit_dec=True)
+
+    @with_loading_popup
+    @addr_ctx_when_none
+    def rename_variables_in_function(self, *args, func_addr=None, decompilation=None, edit_dec=False, **kwargs):
+        bv, address = args[0:2]
+        self.bv = bv
+        return super().rename_variables_in_function(func_addr=address, bv=bv, edit_dec=True)
+
+
+
 
 
 class DAILAPlugin:
