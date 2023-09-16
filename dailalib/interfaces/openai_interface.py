@@ -200,7 +200,7 @@ class OpenAIInterface(GenericAIInterface):
         if cmd not in self.AI_COMMANDS:
             raise ValueError(f"Command {cmd} is not supported")
 
-        kwargs = self.AI_COMMANDS[cmd]
+        kwargs.update(self.AI_COMMANDS[cmd])
         if func_addr is None and decompilation is None:
             raise Exception(f"You must provide either a function address or decompilation!")
 
