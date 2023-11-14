@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Optional
 
 from binsync.api import load_decompiler_controller, BSController
 

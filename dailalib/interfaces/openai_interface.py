@@ -1,7 +1,6 @@
 import re
 from typing import Optional, Dict
 import os
-import textwrap
 import json
 from functools import wraps
 
@@ -138,7 +137,7 @@ class OpenAIInterface(GenericAIInterface):
         answer = None
         try:
             answer = response.choices[0]["message"]["content"]
-        except (KeyError, IndexError) as e:
+        except (KeyError, IndexError):
             pass
 
         return answer
@@ -202,7 +201,7 @@ class OpenAIInterface(GenericAIInterface):
 
         kwargs.update(self.AI_COMMANDS[cmd])
         if func_addr is None and decompilation is None:
-            raise Exception(f"You must provide either a function address or decompilation!")
+            raise Exception("You must provide either a function address or decompilation!")
 
         prompt = self.PROMPTS[cmd]
         if decompilation is not None:
