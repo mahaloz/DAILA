@@ -7,7 +7,7 @@ from functools import wraps
 from openai import OpenAI
 import tiktoken
 
-from .generic_ai_interface import GenericAIInterface
+from .ai_api import AIAPI
 from ..utils import HYPERLINK_REGEX
 
 
@@ -32,7 +32,7 @@ MODEL_TO_TOKENS = {
     "gpt-3.5-turbo": 4096
 }
 
-class OpenAIInterface(GenericAIInterface):
+class OpenAIInterface(AIAPI):
     # API Command Constants
     SUMMARIZE_CMD = "daila_summarize"
     RENAME_FUNCS_CMD = "daial_rename_funcs"

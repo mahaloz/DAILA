@@ -1,4 +1,4 @@
-from dailalib.interfaces.openai_interface import OpenAIInterface
+from dailalib.ai_api.openai_interface import OpenAIInterface
 from xmlrpc.server import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 from functools import wraps
 

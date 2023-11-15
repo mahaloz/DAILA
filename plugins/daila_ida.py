@@ -7,7 +7,7 @@ import ida_hexrays
 import idc
 from PyQt5.QtWidgets import QProgressDialog
 
-from dailalib.interfaces.openai_interface import OpenAIInterface
+from dailalib.ai_api.openai_interface import OpenAIInterface
 
 controller: Optional["IDADAILAController"] = None
 
@@ -71,6 +71,8 @@ def execute_ui(func):
 
 
 def PLUGIN_ENTRY(*args, **kwargs):
+
+
     return DAILAPlugin(*args, **kwargs)
 
 
