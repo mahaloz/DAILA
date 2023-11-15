@@ -41,7 +41,8 @@ class OpenAIBSUser(AIBSUser):
 
             try:
                 resp = self.ai_interface.query_for_cmd(cmd, decompilation=decompilation)
-            except Exception:
+            except Exception as e:
+                _l.error(f"Failed to query for cmd {cmd} with error {e}")
                 continue
 
             if not resp:

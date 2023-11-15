@@ -166,16 +166,20 @@ class AIBSUser:
     def commit_ai_changes_to_state(self, state: State, decompiled_functions):
         ai_initiated_changes = 0
         update_cnt = 0
+        round_updates = 0
         for func_addr, (decompilation, func) in tqdm(decompiled_functions.items(), desc=f"Querying AI for {len(decompiled_functions)} funcs..."):
-            ai_initiated_changes += self.run_all_ai_commands_for_dec(decompilation, func, state)
+            round_changes = self.run_all_ai_commands_for_dec(decompilation, func, state)
+            ai_initiated_changes += round_changes
             if ai_initiated_changes:
                 update_cnt += 1
+                round_updates += round_changes
 
             if update_cnt >= 1:
                 update_cnt = 0
                 self.controller.client.commit_state(state, msg="AI Initiated change to functions")
                 self.controller.client.push()
-                _l.info(f"Pushed some changes to user {self.username}...")
+                _l.info(f"Pushed {round_updates} changes to user {self.username}...")
+                round_updates = 0
 
         return ai_initiated_changes
 
