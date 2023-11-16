@@ -58,9 +58,9 @@ class OpenAIInterface(GenericAIInterface):
     SNIPPET_TEXT = f"\n\"\"\"{SNIPPET_REPLACEMENT_LABEL}\"\"\""
     DECOMP_TEXT = f"\n\"\"\"{DECOMP_REPLACEMENT_LABEL}\"\"\""
     PROMPTS = {
-        RENAME_VARS_CMD: "Analyze what the following function does. Suggest better variable names. "
-                         "Reply with only a JSON array where keys are the original names and values are "
-                         f"the proposed names:{DECOMP_TEXT}",
+        RENAME_VARS_CMD: 'Analyze what the following function does. Suggest better variable names. '
+                         'Reply with only a JSON array where keys are the original names and values are '
+                         f'the proposed names. Here is an example response: {{"v1": "buff"}}  {DECOMP_TEXT}',
         RETYPE_VARS_CMD: "Analyze what the following function does. Suggest better C types for the variables. "
                          "Reply with only a JSON where keys are the original names and values are the "
                          f"proposed types: {DECOMP_TEXT}",

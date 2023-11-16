@@ -16,7 +16,6 @@ from binsync.data import (
 from binsync.ui.qt_objects import (
     QDialog, QMessageBox
 )
-from binsync.ui.utils import QProgressBarDialog
 
 from dailalib.interfaces import OpenAIInterface
 from tqdm import tqdm
@@ -27,7 +26,7 @@ _l.setLevel(logging.INFO)
 
 class AIBSUser:
     MAX_FUNC_SIZE = 0xffff
-    MIN_FUNC_SIZE = 0x25
+    MIN_FUNC_SIZE = 0xff
     DEFAULT_USERNAME = "ai_user"
 
     def __init__(
@@ -43,6 +42,7 @@ class AIBSUser:
         model=None,
         progress_callback=None,
         range_str="",
+        arch=None
     ):
         self._base_on = base_on
         self.username = username
@@ -80,7 +80,8 @@ class AIBSUser:
         # connect the controller to a GitClient
         _l.info(f"AI User working on copied project at: {self.project_path}")
         self.controller: BSController = load_decompiler_controller(
-            force_decompiler=self.decompiler_backend, headless=True, binary_path=binary_path, callback_on_push=False
+            force_decompiler=self.decompiler_backend, headless=True, binary_path=binary_path, callback_on_push=False,
+            arch=arch
         )
         self.controller.connect(username, str(self.project_path), init_repo=create, single_thread=True)
         self.comments = {}
@@ -97,12 +98,14 @@ class AIBSUser:
 
         # collect decompiled functions
         decompiled_functions = self._collect_decompiled_functions()
-        t = threading.Thread(
-            target=self._query_and_commit_changes,
-            args=(master_state, decompiled_functions,)
-        )
-        t.daemon = True
-        t.start()
+        #t = threading.Thread(
+        #    target=self._query_and_commit_changes,
+        #    args=(master_state, decompiled_functions,)
+        #)
+        #t.daemon = True
+        #t.start()
+        self._query_and_commit_changes(master_state, decompiled_functions)
+
 
     def _collect_decompiled_functions(self) -> Dict:
         valid_funcs = [
@@ -116,23 +119,27 @@ class AIBSUser:
             return {}
 
         # open a loading bar for progress updates
-        pbar = QProgressBarDialog(label_text=f"Decompiling {len(valid_funcs)} functions...")
-        pbar.show()
-        self._progress_callback = pbar.update_progress
+        #pbar = QProgressBarDialog(label_text=f"Decompiling {len(valid_funcs)} functions...")
+        #pbar.show()
+        #self._progress_callback = pbar.update_progress
 
         # decompile important functions first
         decompiled_functions = {}
         update_amt_per_func = math.ceil(100 / len(valid_funcs))
         callback_stub = self._progress_callback if self._progress_callback is not None else lambda x: x
         for func_addr in tqdm(valid_funcs, desc=f"Decompiling {len(valid_funcs)} functions for analysis..."):
-            if self.analysis_max is not None and func_addr > self.analysis_max:
-                callback_stub(update_amt_per_func)
-                continue
-            if self.analysis_min is not None and func_addr < self.analysis_min:
+            # bound check funcs size
+            if ((self.analysis_max is not None and func_addr > self.analysis_max) or
+                    (self.analysis_min is not None and func_addr < self.analysis_min)):
                 callback_stub(update_amt_per_func)
                 continue
 
-            func = self.controller.function(func_addr)
+            try:
+                func = self.controller.function(func_addr)
+            except Exception as e:
+                _l.warning(f"Failed to get BS function at {hex(func_addr)}: {e}")
+                func = None
+
             if func is None:
                 callback_stub(update_amt_per_func)
                 continue
@@ -145,11 +152,6 @@ class AIBSUser:
             decompiled_functions[func.addr] = (OpenAIInterface.fit_decompilation_to_token_max(decompilation), func)
             callback_stub(update_amt_per_func)
 
-        dlg = QMessageBox(None)
-        dlg.setWindowTitle("Locking Changes Done")
-        dlg.setText("We've finished decompiling for use with the AI backend. "
-        "We will now run the rest of our AI tasks in the background. You can use your decompiler normally now.")
-        dlg.exec_()
         return decompiled_functions
 
     def _query_and_commit_changes(self, state, decompiled_functions):

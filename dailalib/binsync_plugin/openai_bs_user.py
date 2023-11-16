@@ -32,11 +32,11 @@ class OpenAIBSUser(AIBSUser):
         new_func = Function(func.addr, func.size, header=FunctionHeader("", func.addr, args={}), stack_vars={})
         for cmd in self.ai_interface.AI_COMMANDS:
             # TODO: make this more explicit and change what is run
-            if cmd not in {self.ai_interface.ANSWER_QUESTION_CMD,
-                           self.ai_interface.RENAME_VARS_CMD,
-                           self.ai_interface.SUMMARIZE_CMD,
-                           self.ai_interface.RENAME_FUNCS_CMD
-                           }:
+            if cmd not in {
+                self.ai_interface.RENAME_FUNCS_CMD,
+                self.ai_interface.ID_SOURCE_CMD,
+                self.ai_interface.SUMMARIZE_CMD,
+            }:
                 continue
 
             try:
