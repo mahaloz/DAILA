@@ -16,7 +16,7 @@ from binsync.ui.qt_objects import (
     QDialog, QMessageBox
 )
 
-from dailalib.ai_api import OpenAIInterface
+from dailalib.ai_api import OpenAIAPI
 from tqdm import tqdm
 
 _l = logging.getLogger(__name__)
@@ -148,7 +148,7 @@ class AIBSUser:
                 callback_stub(update_amt_per_func)
                 continue
 
-            decompiled_functions[func.addr] = (OpenAIInterface.fit_decompilation_to_token_max(decompilation), func)
+            decompiled_functions[func.addr] = (OpenAIAPI.fit_decompilation_to_token_max(decompilation), func)
             callback_stub(update_amt_per_func)
 
         return decompiled_functions

@@ -7,7 +7,7 @@ import ida_hexrays
 import idc
 from PyQt5.QtWidgets import QProgressDialog
 
-from dailalib.ai_api.openai_interface import OpenAIInterface
+from dailalib.ai_api.openai_api import OpenAIAPI
 
 controller: Optional["IDADAILAController"] = None
 
@@ -146,7 +146,7 @@ class GenericAction(idaapi.action_handler_t):
         return idaapi.AST_ENABLE_ALWAYS
 
 
-class IDADAILAController(OpenAIInterface):
+class IDADAILAController(OpenAIAPI):
     def __init__(self):
         self.menu_actions = []
         super().__init__(self)

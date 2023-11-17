@@ -1,2 +1,2 @@
 from .ai_api import AIAPI
-from .openai_interface import OpenAIInterface
+from .openai_api import OpenAIAPI

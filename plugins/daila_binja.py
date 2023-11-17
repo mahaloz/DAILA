@@ -8,7 +8,7 @@ from binaryninja.enums import DisassemblyOption, LinearDisassemblyLineType, Inst
 from PySide6.QtWidgets import QProgressDialog
 
 
-from dailalib.ai_api.openai_interface import OpenAIInterface, addr_ctx_when_none
+from dailalib.ai_api.openai_api import OpenAIAPI, addr_ctx_when_none
 
 
 def with_loading_popup(func):
@@ -30,7 +30,7 @@ def with_loading_popup(func):
     return _with_loading_popup
 
 
-class BinjaOpenAIInterface(OpenAIInterface):
+class BinjaOpenAIAPI(OpenAIAPI):
     def __init__(self, bv=None, plugin=None):
         self.bv = bv
         self.plugin = plugin
@@ -155,7 +155,7 @@ class BinjaOpenAIInterface(OpenAIInterface):
 
 class DAILAPlugin:
     def __init__(self):
-        self.controller = BinjaOpenAIInterface(plugin=self)
+        self.controller = BinjaOpenAIAPI(plugin=self)
 
     @staticmethod
     def get_func(bv, address):
