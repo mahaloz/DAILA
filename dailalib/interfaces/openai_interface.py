@@ -4,7 +4,7 @@ import os
 import json
 from functools import wraps
 
-import openai
+from openai import OpenAI
 import tiktoken
 
 from .generic_ai_interface import GenericAIInterface
@@ -57,9 +57,9 @@ class OpenAIInterface(GenericAIInterface):
     SNIPPET_TEXT = f"\n\"\"\"{SNIPPET_REPLACEMENT_LABEL}\"\"\""
     DECOMP_TEXT = f"\n\"\"\"{DECOMP_REPLACEMENT_LABEL}\"\"\""
     PROMPTS = {
-        RENAME_VARS_CMD: "Analyze what the following function does. Suggest better variable names. "
-                         "Reply with only a JSON array where keys are the original names and values are "
-                         f"the proposed names:{DECOMP_TEXT}",
+        RENAME_VARS_CMD: 'Analyze what the following function does. Suggest better variable names. '
+                         'Reply with only a JSON array where keys are the original names and values are '
+                         f'the proposed names. Here is an example response: {{"v1": "buff"}}  {DECOMP_TEXT}',
         RETYPE_VARS_CMD: "Analyze what the following function does. Suggest better C types for the variables. "
                          "Reply with only a JSON where keys are the original names and values are the "
                          f"proposed types: {DECOMP_TEXT}",
@@ -96,7 +96,8 @@ class OpenAIInterface(GenericAIInterface):
             self._register_menu_item(menu_str, callback_str, callback_func)
 
         self._api_key = os.getenv("OPENAI_API_KEY") or openai_api_key
-        openai.api_key = self._api_key
+        self._openai_client = OpenAI(api_key=self._api_key)
+
 
     @property
     def api_key(self):
@@ -105,7 +106,7 @@ class OpenAIInterface(GenericAIInterface):
     @api_key.setter
     def api_key(self, data):
         self._api_key = data
-        openai.api_key = self._api_key
+        
 
     #
     # OpenAI Interface
@@ -122,22 +123,20 @@ class OpenAIInterface(GenericAIInterface):
     ):
         # TODO: at some point add back frequency_penalty and presence_penalty to be used
         try:
-            response = openai.ChatCompletion.create(
-                model=model or self.model,
-                messages=[
-                    {"role": "user", "content": question}
-                ],
-                max_tokens=max_tokens,
-                timeout=60,
-                stop=['}'],
-            )
+            response = self._openai_client.chat.completions.create(model=model or self.model,
+            messages=[
+                {"role": "user", "content": question}
+            ],
+            max_tokens=max_tokens,
+            timeout=60,
+            stop=['}'])
         except openai.OpenAIError as e:
             raise Exception(f"ChatGPT could not complete the request: {str(e)}")
 
         answer = None
         try:
-            answer = response.choices[0]["message"]["content"]
-        except (KeyError, IndexError):
+            answer = response.choices[0].message.content
+        except (KeyError, IndexError) as e:
             pass
 
         return answer
