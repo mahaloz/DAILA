@@ -1,7 +1,6 @@
 import os
 from pathlib import Path
 import logging
-from threading import Thread
 
 from binsync.ui.qt_objects import (
     QComboBox,
@@ -12,17 +11,11 @@ from binsync.ui.qt_objects import (
     QHBoxLayout,
     QLabel,
     QLineEdit,
-    QMessageBox,
     QPushButton,
-    QVBoxLayout,
-    QTableWidget,
-    QTableWidgetItem,
-    QHeaderView
+    QVBoxLayout
 )
-from binsync.ui.utils import QProgressBarDialog
 from . import AIBSUser, add_ai_user_to_project
 from binsync.api.controller import BSController
-from binsync.decompilers import ANGR_DECOMPILER, IDA_DECOMPILER
 
 _l = logging.getLogger(__name__)
 AUTO_DECOMPILER = "automatic"

@@ -9,7 +9,7 @@ class DAILAInstaller(Installer):
     def __init__(self):
         super().__init__(targets=("ida", "ghidra", "binja"))
         self.plugins_path = Path(
-            pkg_resources.resource_filename("dailalib", f"plugins")
+            pkg_resources.resource_filename("dailalib", "plugins")
         )
 
     def display_prologue(self):

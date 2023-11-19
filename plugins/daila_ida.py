@@ -153,7 +153,7 @@ class IDADAILAController(OpenAIInterface):
     def _decompile(self, func_addr: int, **kwargs):
         try:
             cfunc = ida_hexrays.decompile(func_addr)
-        except Exception as e:
+        except Exception:
             return None
 
         return str(cfunc)

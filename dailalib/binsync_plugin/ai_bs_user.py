@@ -3,12 +3,11 @@ import os
 import shutil
 from pathlib import Path
 import tempfile
-from typing import Union, Dict
+from typing import Dict
 import math
 import threading
 
 from binsync.api import load_decompiler_controller, BSController
-from binsync.decompilers import ANGR_DECOMPILER
 from binsync.data.state import State
 from binsync.data import (
     Function, Comment, StackVariable
