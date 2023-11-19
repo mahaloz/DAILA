@@ -3,7 +3,7 @@ from typing import Dict
 
 from binsync.data import Function, StackVariable, Comment, State, FunctionHeader
 
-from dailalib.ai_api import OpenAIAPI
+from dailalib.api import OpenAIAPI
 from dailalib.binsync_plugin.ai_bs_user import AIBSUser
 
 _l = logging.getLogger(__name__)

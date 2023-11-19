@@ -8,7 +8,7 @@ from binaryninja.enums import DisassemblyOption, LinearDisassemblyLineType, Inst
 from PySide6.QtWidgets import QProgressDialog
 
 
-from dailalib.ai_api.openai_api import OpenAIAPI, addr_ctx_when_none
+from dailalib.api.openai_api import OpenAIAPI, addr_ctx_when_none
 
 
 def with_loading_popup(func):

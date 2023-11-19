@@ -10,20 +10,34 @@ class AIAPI:
         decompiler_interface: Optional[DecompilerInterface] = None,
         decompiler_name: Optional[str] = None,
         use_decompiler: bool = True,
+        delay_init: bool = False,
         # size in bytes
         min_func_size: int = 0x10,
         max_func_size: int = 0xffff,
         model=None,
+    ):
+        # useful for initing after the creation of a decompiler interface
+        if delay_init:
+            self._dec_interface = None
+            self._dec_name = None
+        else:
+            self.init_decompiler_interface(decompiler_interface, decompiler_name, use_decompiler)
+
+        self._min_func_size = min_func_size
+        self._max_func_size = max_func_size
+        self.model = model or self.__class__.__name__
+
+    def init_decompiler_interface(
+        self,
+        decompiler_interface: Optional[DecompilerInterface] = None,
+        decompiler_name: Optional[str] = None,
+        use_decompiler: bool = True
     ):
         self._dec_interface: DecompilerInterface = DecompilerInterface.discover_interface(force_decompiler=decompiler_name) \
             if use_decompiler and decompiler_interface is None else decompiler_interface
         self._dec_name = decompiler_name if decompiler_interface is None else decompiler_interface.name
         if self._dec_interface is None and not self._dec_name:
             raise ValueError("You must either provide a decompiler name or a decompiler interface.")
-
-        self._min_func_size = min_func_size
-        self._max_func_size = max_func_size
-        self.model = model or self.__name__
 
     @property
     def has_decompiler_gui(self):
@@ -42,7 +56,7 @@ class AIAPI:
         The Function collected from the UI is the one the use is currently looking at.
         """
         @wraps(f)
-        def _requires_function(self: "AIAPI", *args, **kwargs):
+        def _requires_function(*args, ai_api: "AIAPI" = None, **kwargs):
             function = kwargs.pop("function", None)
             dec_text = kwargs.pop("dec_text", None)
             use_dec = kwargs.pop("use_dec", True)
@@ -53,16 +67,16 @@ class AIAPI:
             # two mode constructions: with decompiler and without
             # with decompiler backend
             if use_dec:
-                if not self.has_decompiler_gui and function is None:
+                if not ai_api.has_decompiler_gui and function is None:
                     raise ValueError("You must provide a Function when using this with a decompiler")
 
                 # we must have a UI if we have no func
                 if function is None:
-                    function = self._dec_interface.active_context()
+                    function = ai_api._dec_interface.active_context()
 
                 # get new text with the function that is present
                 if dec_text is None:
-                    dec_text = self._dec_interface.decompile(function.addr)
+                    dec_text = ai_api._dec_interface.decompile(function.addr)
 
             return f(*args, function=function, dec_text=dec_text, use_dec=use_dec, **kwargs)
 

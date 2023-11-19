@@ -16,7 +16,7 @@ from binsync.ui.qt_objects import (
     QDialog, QMessageBox
 )
 
-from dailalib.ai_api import OpenAIAPI
+from dailalib.api import OpenAIAPI
 from tqdm import tqdm
 
 _l = logging.getLogger(__name__)

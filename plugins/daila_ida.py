@@ -7,7 +7,7 @@ import ida_hexrays
 import idc
 from PyQt5.QtWidgets import QProgressDialog
 
-from dailalib.ai_api.openai_api import OpenAIAPI
+from dailalib.api.openai_api import OpenAIAPI
 
 controller: Optional["IDADAILAController"] = None
 

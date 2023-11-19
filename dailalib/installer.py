@@ -1,16 +1,19 @@
 import textwrap
 from pathlib import Path
+import importlib.resources
 
-import pkg_resources
-from binsync.installer import Installer
+from yodalib.plugin_installer import PluginInstaller
 
 
-class DAILAInstaller(Installer):
+class DAILAInstaller(PluginInstaller):
     def __init__(self):
         super().__init__(targets=("ida", "ghidra", "binja"))
-        self.plugins_path = Path(
-            pkg_resources.resource_filename("dailalib", "plugins")
-        )
+        self.pkg_path = Path(str(importlib.resources.files("dailalib"))).absolute()
+
+    def _copy_plugin_to_path(self, path):
+        src = self.pkg_path / "daila_plugin.py"
+        dst = Path(path) / "daila_plugin.py"
+        self.link_or_copy(src, dst)
 
     def display_prologue(self):
         print(textwrap.dedent("""
@@ -30,40 +33,30 @@ class DAILAInstaller(Installer):
         The Decompiler AI Language Assistant                                                         
         """))
 
-    def install_ida(self, path=None):
-        ida_plugin_path = super().install_ida(path=path)
-        if ida_plugin_path is None:
+    def install_ida(self, path=None, interactive=True):
+        path = path or super().install_ida(path=path, interactive=interactive)
+        if not path:
             return
 
-        src_ida_py = self.plugins_path.joinpath("daila_ida.py").absolute()
-        dst_ida_py = ida_plugin_path.joinpath("daila_ida.py").absolute()
-        self.link_or_copy(src_ida_py, dst_ida_py)
-        return dst_ida_py
+        self._copy_plugin_to_path(path)
 
-    def install_ghidra(self, path=None):
-        ghidra_path = self.ask_path("Ghidra Scripts Path:") if path is None else path
-        if not ghidra_path:
-            return None
+    def install_ghidra(self, path=None, interactive=True):
+        path = path or super().install_ghidra(path=path, interactive=interactive)
+        if not path:
+            return
 
-        ghidra_path: Path = ghidra_path.expanduser().absolute()
-        if not ghidra_path.exists():
-            return None
+        self._copy_plugin_to_path(path)
 
-        src_ghidra_py = self.plugins_path.joinpath("daila_ghidra.py").absolute()
-        dst_path = ghidra_path.expanduser().absolute()
-        if not dst_path.exists():
-            return None
+    def install_binja(self, path=None, interactive=True):
+        path = path or super().install_binja(path=path, interactive=interactive)
+        if not path:
+            return
 
-        dst_ghidra_py = dst_path.joinpath(src_ghidra_py.name)
-        self.link_or_copy(src_ghidra_py, dst_ghidra_py)
-        return dst_ghidra_py
+        self._copy_plugin_to_path(path)
 
-    def install_binja(self, path=None):
-        binja_plugin_path = super().install_binja(path=path)
-        if binja_plugin_path is None:
-            return None
+    def install_angr(self, path=None, interactive=True):
+        path = path or super().install_angr(path=path, interactive=interactive)
+        if not path:
+            return
 
-        src_path = self.plugins_path.joinpath("daila_binja.py")
-        dst_path = binja_plugin_path.joinpath("daila_binja.py")
-        self.link_or_copy(src_path, dst_path)
-        return dst_path
+        self._copy_plugin_to_path(path)
