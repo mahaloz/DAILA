@@ -167,12 +167,15 @@ class AIUserConfigDialog(QDialog):
     
     def threaded_add_ai_user_to_project(self):
         # angr hack to make sure the workspace is visible!
+        arch = None
         if hasattr(self._controller, "workspace"):
             globals()['workspace'] = self._controller.workspace
+            arch = self._controller.main_instance.project.arch.name
 
+        #import remote_pdb; remote_pdb.RemotePdb("localhost", 4444).set_trace()
         add_ai_user_to_project(
             self.api_key, self.binary_path, self.project_path, username=self.username,
             base_on=self.base_on, headless=True if self.decompiler_backend else False, copy_proj=True, model=self.model,
-            decompiler_backend=self.decompiler_backend, range_str=self.range_str
+            decompiler_backend=self.decompiler_backend, range_str=self.range_str, arch=arch
         )
         self._controller.used_ai_user = True
