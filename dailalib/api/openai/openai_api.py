@@ -21,11 +21,9 @@ class OpenAIAPI(AIAPI):
     # replacement strings for API calls
     def __init__(self, api_key: Optional[str] = None, model: str = DEFAULT_MODEL, prompts: Optional[list] = None, **kwargs):
         super().__init__(**kwargs)
+        self._api_key = None
+        self._openai_client: OpenAI = None
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
-        if not self.api_key:
-            raise ValueError("You must provide an API key if you don't have one in your env var $OPENAI_API_KEY")
-
-        self._openai_client = OpenAI(api_key=self.api_key)
         self.model = model
 
         # delay prompt import
@@ -44,12 +42,28 @@ class OpenAIAPI(AIAPI):
         else:
             return object.__getattribute__(self, item)
 
+    @property
+    def api_key(self):
+        return self._api_key
+
+    @api_key.setter
+    def api_key(self, value):
+        self._api_key = value
+        if self._api_key:
+            self._openai_client = OpenAI(api_key=self._api_key)
+
+    def ask_api_key(self, *args, **kwargs):
+        self.api_key = self._dec_interface.gui_ask_for_string("Enter you OpenAI API Key:", title="DAILA")
+
     def query_model(
         self,
         prompt: str,
         model: Optional[str] = None,
         max_tokens=None,
     ):
+        if not self._openai_client:
+            raise ValueError("You must provide an API key before querying the model.")
+
         response = self._openai_client.chat.completions.create(
             model=model or self.model,
             messages=[

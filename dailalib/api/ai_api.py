@@ -17,10 +17,9 @@ class AIAPI:
         model=None,
     ):
         # useful for initing after the creation of a decompiler interface
-        if delay_init:
-            self._dec_interface = None
-            self._dec_name = None
-        else:
+        self._dec_interface: Optional[DecompilerInterface] = None
+        self._dec_name = None
+        if not delay_init:
             self.init_decompiler_interface(decompiler_interface, decompiler_name, use_decompiler)
 
         self._min_func_size = min_func_size

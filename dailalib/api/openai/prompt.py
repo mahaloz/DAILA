@@ -36,7 +36,7 @@ class Prompt:
         self.desc = desc or name
         self.ai_api: "OpenAIAPI" = ai_api
 
-    def query_model(self, function=None, dec_text=None, use_dec=True):
+    def query_model(self, *args, function=None, dec_text=None, use_dec=True, **kwargs):
         if self.ai_api is None:
             raise Exception("api must be set before querying!")
 

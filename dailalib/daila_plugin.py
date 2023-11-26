@@ -2,8 +2,13 @@ import sys
 try:
     import idaapi
     has_ida = True
-except:
+except ImportError:
     has_ida = False
+try:
+    import binaryninja
+    has_binja = True
+except ImportError:
+    has_binja = False
 
 
 def create_plugin(*args, **kwargs):
@@ -11,17 +16,18 @@ def create_plugin(*args, **kwargs):
     from dailalib.api import OpenAIAPI
 
     ai_api = OpenAIAPI(delay_init=True)
-    # create context menus
+    # create context menus for prompts
     gui_ctx_menu_actions = {
         f"DAILA/{prompt_name}": (prompt.desc, getattr(ai_api, prompt_name))
         for prompt_name, prompt in ai_api.prompts_by_name.items()
     }
+    # create context menus for others
+    gui_ctx_menu_actions["DAILA/Update API Key"] = ("Update API Key", ai_api.ask_api_key)
 
     # create decompiler interface
     deci = DecompilerInterface.discover_interface(
-        force_decompiler="ida",
         # decompiler-creation args
-        plugin_name="daila_new",
+        plugin_name="DAILA",
         init_plugin=True,
         gui_ctx_menu_actions=gui_ctx_menu_actions,
         ui_init_args=args,
@@ -38,7 +44,10 @@ def PLUGIN_ENTRY(*args, **kwargs):
     return create_plugin(*args, **kwargs)
 
 
-if __name__ == "__main__":
+if has_binja:
+    # you must explicitly call create_plugin() in your Binary Ninja plugin
+    create_plugin()
+elif __name__ == "__main__":
     if has_ida:
         # will be called in PLUGIN_ENTRY for IDA
         pass
@@ -48,3 +57,4 @@ if __name__ == "__main__":
     else:
         # we are in some other Py3 decompiler
         create_plugin()
+
