@@ -3,36 +3,17 @@
 # @category AI
 # @menupath Tools.libbs.Run DAILA
 
+
+# replace this with the command to run your plugin remotely
 library_command = "dailalib run-ghidra-server"
-
-def create_plugin(*args, force_decompiler=None, **kwargs):
-    from yodalib.api import DecompilerInterface
-    from dailalib.api import OpenAIAPI
-
-    ai_api = OpenAIAPI(delay_init=True)
-    # create context menus for prompts
-    gui_ctx_menu_actions = {
-        f"DAILA/{prompt_name}": (prompt.desc, getattr(ai_api, prompt_name))
-        for prompt_name, prompt in ai_api.prompts_by_name.items()
-    }
-    # create context menus for others
-    gui_ctx_menu_actions["DAILA/Update API Key"] = ("Update API Key", ai_api.ask_api_key)
-
-    # create decompiler interface
-    deci = DecompilerInterface.discover_interface(
-        force_decompiler=force_decompiler,
-        # decompiler-creation args
-        plugin_name="DAILA",
-        init_plugin=True,
-        gui_ctx_menu_actions=gui_ctx_menu_actions,
-        ui_init_args=args,
-        ui_init_kwargs=kwargs
-    )
-    ai_api.init_decompiler_interface(decompiler_interface=deci)
-    return deci.gui_plugin
+# replace this imporate with an import of your plugin's create_plugin function
+def create_plugin(*args, **kwargs):
+    import ghidra_bridge
+    from dailalib import create_plugin as _create_plugin
+    return _create_plugin(*args, **kwargs)
 
 # =============================================================================
-# LibBS generic plugin entry point
+# LibBS generic plugin loader (don't touch)
 # =============================================================================
 
 import sys
@@ -57,7 +38,9 @@ def ghidra_plugin_main():
     full_command = "python3 -m " + library_command
 
     GhidraBridgeServer.run_server(background=True)
-    subprocess.Popen(full_command.split(" "))
+    process = subprocess.Popen(full_command.split(" "))
+    if process.poll() is not None:
+        raise RuntimeError("Failed to run the Python3 backed. It's likely Python3 is not in your Path inside Ghidra.")
 
 def PLUGIN_ENTRY(*args, **kwargs):
     """
@@ -79,4 +62,3 @@ elif __name__ == "__main__":
         ghidra_plugin_main()
     else:
         create_plugin()
-

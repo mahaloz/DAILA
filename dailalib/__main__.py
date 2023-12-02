@@ -1,42 +1,36 @@
 import argparse
-import importlib.resources
-from pathlib import Path
 
 import dailalib
 from .installer import DAILAInstaller
 
 
-
-class COMMANDS:
-    INSTALL = "install"
-    RUN_GHIDRA_SERVER = "run-ghidra-server"
-    ALL_COMMANDS = [INSTALL, RUN_GHIDRA_SERVER]
-
-
 def main():
     parser = argparse.ArgumentParser(
         description="""
-            The DAILA CLI is used to install the DAILA core to supported decompilers as plugins and run the
-            headless DAILA server for use with Ghidra. 
+            The DAILA CLI is used to install, run, and host the DAILA plugin.
             """,
         epilog="""
             Examples:
-            dailalib install
+            daila install
             """
     )
     parser.add_argument(
-        "command", choices=COMMANDS.ALL_COMMANDS, help="""
-        The command to run. 
-        """
+        "-i", "--install", action="store_true", help="Install DAILA into your decompiler"
     )
     parser.add_argument(
-        "--version", action="version", version=f"DAILA {dailalib.__version__}"
+        "-s", "--server", help="Run a a headless server for DAILA", choices=["ghidra"]
+    )
+    parser.add_argument(
+        "-v", "--version", action="version", version=f"DAILA {dailalib.__version__}"
     )
     args = parser.parse_args()
 
-    if args.command == COMMANDS.INSTALL:
+    if args.install:
         DAILAInstaller().install()
-    elif args.command == COMMANDS.RUN_GHIDRA_SERVER:
+    elif args.server:
+        if args.server != "ghidra":
+            raise NotImplementedError("Only Ghidra is supported for now")
+
         from dailalib.daila_plugin import create_plugin
         create_plugin(force_decompiler="ghidra")
 

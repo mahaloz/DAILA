@@ -1,7 +1,7 @@
 from typing import Dict, Optional
 from functools import wraps
 
-from yodalib.api import DecompilerInterface
+from libbs.api import DecompilerInterface
 
 
 class AIAPI:

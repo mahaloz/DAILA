@@ -1,6 +1,6 @@
 import typing
 
-from yodalib.data import Comment
+from libbs.data import Comment
 
 from .prompt import Prompt
 

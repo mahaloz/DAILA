@@ -2,7 +2,7 @@ import textwrap
 from pathlib import Path
 import importlib.resources
 
-from yodalib.plugin_installer import PluginInstaller
+from libbs.plugin_installer import PluginInstaller
 
 
 class DAILAInstaller(PluginInstaller):
@@ -13,7 +13,7 @@ class DAILAInstaller(PluginInstaller):
     def _copy_plugin_to_path(self, path):
         src = self.pkg_path / "daila_plugin.py"
         dst = Path(path) / "daila_plugin.py"
-        self.link_or_copy(src, dst)
+        self.link_or_copy(src, dst, symlink=True)
 
     def display_prologue(self):
         print(textwrap.dedent("""
