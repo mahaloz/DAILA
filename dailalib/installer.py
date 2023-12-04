@@ -39,6 +39,7 @@ class DAILAInstaller(PluginInstaller):
             return
 
         self._copy_plugin_to_path(path)
+        return path
 
     def install_ghidra(self, path=None, interactive=True):
         path = path or super().install_ghidra(path=path, interactive=interactive)
@@ -46,6 +47,7 @@ class DAILAInstaller(PluginInstaller):
             return
 
         self._copy_plugin_to_path(path)
+        return path
 
     def install_binja(self, path=None, interactive=True):
         path = path or super().install_binja(path=path, interactive=interactive)
@@ -53,6 +55,7 @@ class DAILAInstaller(PluginInstaller):
             return
 
         self._copy_plugin_to_path(path)
+        return path
 
     def install_angr(self, path=None, interactive=True):
         path = path or super().install_angr(path=path, interactive=interactive)
@@ -60,3 +63,4 @@ class DAILAInstaller(PluginInstaller):
             return
 
         self._copy_plugin_to_path(path)
+        return path

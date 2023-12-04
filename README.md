@@ -1,44 +1,73 @@
 # DAILA 
-Decompiler Artificial Intelligence Language Assistant - Built on OpenAI.
-Utilize OpenAI to improve your decompilation experience in most modern decompilers.
+The Decompiler Artificial Intelligence Language Assistant (DAILA) is a unified interface for AI systems to be used in decompilers.
+Using DAILA, you can utilize various AI systems, like local and remote LLMs, all in the same scripting and GUI interfaces.
 
-![](./assets/ida_daila.png)
+<img src="./assets/ida_daila.png" style="width: 50%;" alt="DAILA context menu"/>
+
+DAILA's main purpose is to provide a unified interface for AI systems to be used in decompilers.
+To accomplish this, DAILA provides a lifted interface, relying on the BinSync library [LibBS](https://github.com/binsync/libbs) to abstract away the decompiler.
+**All decompilers supported in LibBS are supported in DAILA, which currently includes IDA, Ghidra, Binja, and angr-management.**
 
 ## Installation
-Clone down this repo and pip install and use the daila installer:
+Install our library backend through pip and our decompiler plugin through our installer:
 ```bash
-pip3 install -e . && dailalib --install 
+pip3 install dailalib && daila --install 
 ```
 
-Depending on your decompiler, this will attempt to copy the script files into your decompiler and install
-the DAILA core to your current Python. If you are using Binja or IDA, make sure your Python is the same 
-as the one you are using in your decompiler. 
+### Ghidra Extras
+You need to do a few extra steps to get Ghidra working.
+Next, enable the DAILA plugin:
+1. Start Ghidra and open a binary
+2. Goto the `Windows > Script Manager` menu
+3. Search for `daila` and enable the script
 
-If you are using Ghidra, you may be required to enable the `$USER_HOME/ghidra_scripts` as a valid 
-scripts path. 
-
-If your decompiler does not have access to the `OPENAI_API_KEY`, then you must use the decompiler option from
-DAILA to set the API key. A popup will appear for you to enter your key. 
-
-### Manual Install
-If the above fails, you will need to manually install.
-To manually install, first `pip3 install -e .` on the repo, then copy the python file for your decompiler in your 
-decompilers plugins/scripts folder. 
-
-### Ghidra Gotchas
 You must have `python3` in your path for the Ghidra version to work. We quite literally call it from inside Python 2.
+You may also need to enable the `$USER_HOME/ghidra_scripts` as a valid scripts path in Ghidra.
+
+### Manual Install (if above fails)
+If the above fails, you will need to manually install.
+To manually install, first `pip3 install dailalib` on the repo, then copy the [daila_plugin.py](./dailalib/daila_plugin.py) file to your decompiler's plugin directory.
+
 
 ## Usage
-In your decompiler you can access the DAILA options in one of two ways:
-1. If you are not in Ghidra, you can right-click a function and go to `Plugins` or directly use the `DAILA ...` menu.
-2. If you are in Ghidra, use `Tools->DAILA` then use the operation selector
+DAILA is designed to be used in two ways:
+1. As a decompiler plugin with a GUI
+2. As a scripting library in your decompiler
 
-All operations that DAILA can perform can be found from the DAILA context menu, which in some decompilers may just be 
-the menu described above.
+### Decompiler GUI
+With the exception of Ghidra (see below), when you start your decompiler you will have a new context menu 
+which you can access when you right-click anywhere in a function:
 
-![](./assets/ida_show_menu_daila.png)
+<img src="./assets/ida_show_menu_daila.png" style="width: 50%;" alt="DAILA context menu"/>
 
-Comments will appear in the function header with the response or an error message.
+If you are using Ghidra, go to `Tools->DAILA->Start DAILA Backend` to start the backend server.
+After you've done this, you can use the context menu as shown above.
+
+### Scripting
+You can use DAILA in your own scripts by importing the `dailalib` package.
+Here is an example using the OpenAI API:
+```python
+from dailalib import OpenAIAPI
+from libbs.api import DecompilerInterface
+
+deci = DecompilerInterface.discover_interface()
+ai_api = OpenAIAPI(decompiler_interface=deci)
+for function in deci.functions:
+    summary = ai_api.summarize_function(function)
+```
+
+
+## Supported AI Backends
+### OpenAI
+DAILA supports the OpenAI API. To use the OpenAI API, you must have an OpenAI API key.
+If your decompiler does not have access to the `OPENAI_API_KEY` environment variable, then you must use the decompiler option from
+DAILA to set the API key.
+
+Currently, DAILA supports the following prompts:
+- Summarize a function
+- Rename variables
+- Rename function
+- Identify the source of a function
 
 ## Supported Decompilers
 - IDA
@@ -49,15 +78,3 @@ Comments will appear in the function header with the response or an error messag
 
 - Ghidra
 ![](./assets/ghidra_daila.png)
-
-## Features
-### Function Identification
-We use ChatGPT to attempt to:
-1. Identify which open-source project this decompilation could be a result of 
-2. Find a link to that said source if it exists 
-
-### Function Summarization
-Summarizes in human-readable text what this function does
-
-### Vulnerability Detection
-Attempts to find and describe the vulnerability in the function 

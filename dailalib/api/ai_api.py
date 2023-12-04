@@ -38,6 +38,22 @@ class AIAPI:
         if self._dec_interface is None and not self._dec_name:
             raise ValueError("You must either provide a decompiler name or a decompiler interface.")
 
+    def info(self, msg):
+        if self._dec_interface is not None:
+            self._dec_interface.info(msg)
+
+    def debug(self, msg):
+        if self._dec_interface is not None:
+            self._dec_interface.debug(msg)
+
+    def warning(self, msg):
+        if self._dec_interface is not None:
+            self._dec_interface.warning(msg)
+
+    def error(self, msg):
+        if self._dec_interface is not None:
+            self._dec_interface.error(msg)
+
     @property
     def has_decompiler_gui(self):
         return self._dec_interface is not None and not self._dec_interface.headless

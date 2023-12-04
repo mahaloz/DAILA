@@ -42,6 +42,10 @@ class Prompt:
 
         @AIAPI.requires_function
         def _query_model(ai_api=self.ai_api, function=function, dec_text=dec_text, use_dec=use_dec) -> Union[Dict, str]:
+            if not ai_api:
+                return {}
+
+            ai_api.info(f"Querying {self.name} prompt with function {function}...")
             response = self._pretext_response if self._pretext_response and not self._json_response else ""
             # grab decompilation and replace it in the prompt, make sure to fix the decompilation for token max
             query_text = self.text.replace(
@@ -74,6 +78,7 @@ class Prompt:
             if ai_api.has_decompiler_gui and response:
                 self._gui_result_callback(response, function, ai_api)
 
+            ai_api.info(f"Reponse recieved...")
             return response
         return _query_model(ai_api=self.ai_api, function=function, dec_text=dec_text, use_dec=use_dec)
 

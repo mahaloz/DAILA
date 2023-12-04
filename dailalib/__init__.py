@@ -1,10 +1,10 @@
 __version__ = "2.0.0"
 
 from .api import AIAPI, OpenAIAPI
+from libbs.api import DecompilerInterface
 
 
 def create_plugin(*args, **kwargs):
-    from libbs.api import DecompilerInterface
 
     ai_api = OpenAIAPI(delay_init=True)
     # create context menus for prompts
@@ -27,8 +27,5 @@ def create_plugin(*args, **kwargs):
         ui_init_kwargs=kwargs
     )
     ai_api.init_decompiler_interface(decompiler_interface=deci)
-    import time
 
-    print("DAILA: Decompiler interface running...")
-    time.sleep(1000)
     return deci.gui_plugin

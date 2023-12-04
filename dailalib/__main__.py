@@ -1,7 +1,7 @@
 import argparse
 
-import dailalib
 from .installer import DAILAInstaller
+import dailalib
 
 
 def main():
@@ -15,7 +15,7 @@ def main():
             """
     )
     parser.add_argument(
-        "-i", "--install", action="store_true", help="Install DAILA into your decompiler"
+        "-i", "--install", action="store_true", help="Install DAILA into your decompilers"
     )
     parser.add_argument(
         "-s", "--server", help="Run a a headless server for DAILA", choices=["ghidra"]
@@ -31,7 +31,7 @@ def main():
         if args.server != "ghidra":
             raise NotImplementedError("Only Ghidra is supported for now")
 
-        from dailalib.daila_plugin import create_plugin
+        from dailalib import create_plugin
         create_plugin(force_decompiler="ghidra")
 
 
