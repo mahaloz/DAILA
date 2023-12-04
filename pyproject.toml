@@ -7,19 +7,23 @@ name = "dailalib"
 classifiers = [
     "License :: OSI Approved :: BSD License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.8",
 ]
 license = {text = "BSD 2 Clause"}
 description = "Decompiler Artificial Intelligence Language Assistant"
 urls = {Homepage = "https://github.com/mahaloz/DAILA"}
-requires-python = ">= 3.5"
+requires-python = ">= 3.8"
 dependencies = [
-    "openai>=0.27.4",
-    "binsync",
-    "PySide6-Essentials",
+    "openai>=1.0.0",
+    "libbs",
     "tiktoken",
 ]
 dynamic = ["version"]
+
+[project.optional-dependencies]
+ghidra = [
+    "libbs[ghidra]",
+]
 
 [project.readme]
 file = "README.md"
@@ -35,8 +39,6 @@ license-files = ["LICENSE"]
 [tool.setuptools.packages]
 find = {namespaces = false}
 
-[tool.setuptools.package-data]
-daila = ["plugins/*.py"]
-
 [tool.setuptools.dynamic]
 version = {attr = "dailalib.__version__"}
+
