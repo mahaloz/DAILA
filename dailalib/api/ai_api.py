@@ -19,7 +19,8 @@ class AIAPI:
         # useful for initing after the creation of a decompiler interface
         self._dec_interface: Optional[DecompilerInterface] = None
         self._dec_name = None
-        if not delay_init:
+        self._delay_init = delay_init
+        if not self._delay_init:
             self.init_decompiler_interface(decompiler_interface, decompiler_name, use_decompiler)
 
         self._min_func_size = min_func_size
@@ -75,6 +76,10 @@ class AIAPI:
             function = kwargs.pop("function", None)
             dec_text = kwargs.pop("dec_text", None)
             use_dec = kwargs.pop("use_dec", True)
+            has_self = kwargs.pop("has_self", True)
+            # make the self object the new AI API, should only be used inside an AIAPI class
+            if not ai_api and has_self:
+                ai_api = args[0]
 
             if not dec_text and not use_dec:
                 raise ValueError("You must provide decompile text if you are not using a dec backend")
@@ -87,7 +92,7 @@ class AIAPI:
 
                 # we must have a UI if we have no func
                 if function is None:
-                    function = ai_api._dec_interface.active_context()
+                    function = ai_api._dec_interface.functions[ai_api._dec_interface.active_context().addr]
 
                 # get new text with the function that is present
                 if dec_text is None:
