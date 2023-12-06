@@ -1,6 +1,5 @@
 import textwrap
 from pathlib import Path
-import importlib.resources
 
 from libbs.plugin_installer import PluginInstaller
 
@@ -8,7 +7,7 @@ from libbs.plugin_installer import PluginInstaller
 class DAILAInstaller(PluginInstaller):
     def __init__(self):
         super().__init__(targets=("ida", "ghidra", "binja", "angr"))
-        self.pkg_path = Path(str(importlib.resources.files("dailalib"))).absolute()
+        self.pkg_path = self.find_pkg_files("dailalib")
 
     def _copy_plugin_to_path(self, path):
         src = self.pkg_path / "daila_plugin.py"
