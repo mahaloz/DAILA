@@ -2,7 +2,7 @@
 The Decompiler Artificial Intelligence Language Assistant (DAILA) is a unified interface for AI systems to be used in decompilers.
 Using DAILA, you can utilize various AI systems, like local and remote LLMs, all in the same scripting and GUI interfaces.
 
-<img src="./assets/ida_daila.png" style="width: 50%;" alt="DAILA context menu"/>
+<img src="./assets/ida_daila.png" style="width: 90%;" alt="DAILA context menu"/>
 
 DAILA's main purpose is to provide a unified interface for AI systems to be used in decompilers.
 To accomplish this, DAILA provides a lifted interface, relying on the BinSync library [LibBS](https://github.com/binsync/libbs) to abstract away the decompiler.

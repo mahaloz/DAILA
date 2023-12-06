@@ -20,17 +20,12 @@ class DAILAInstaller(PluginInstaller):
     def display_prologue(self):
         print(textwrap.dedent("""
         Now installing...
-         ▄▄▄▄▄▄▄▄▄▄   ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄            ▄▄▄▄▄▄▄▄▄▄▄ 
-        ▐░░░░░░░░░░▌ ▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░▌          ▐░░░░░░░░░░░▌
-        ▐░█▀▀▀▀▀▀▀█░▌▐░█▀▀▀▀▀▀▀█░▌ ▀▀▀▀█░█▀▀▀▀ ▐░▌          ▐░█▀▀▀▀▀▀▀█░▌
-        ▐░▌       ▐░▌▐░▌       ▐░▌     ▐░▌     ▐░▌          ▐░▌       ▐░▌
-        ▐░▌       ▐░▌▐░█▄▄▄▄▄▄▄█░▌     ▐░▌     ▐░▌          ▐░█▄▄▄▄▄▄▄█░▌
-        ▐░▌       ▐░▌▐░░░░░░░░░░░▌     ▐░▌     ▐░▌          ▐░░░░░░░░░░░▌
-        ▐░▌       ▐░▌▐░█▀▀▀▀▀▀▀█░▌     ▐░▌     ▐░▌          ▐░█▀▀▀▀▀▀▀█░▌
-        ▐░▌       ▐░▌▐░▌       ▐░▌     ▐░▌     ▐░▌          ▐░▌       ▐░▌
-        ▐░█▄▄▄▄▄▄▄█░▌▐░▌       ▐░▌ ▄▄▄▄█░█▄▄▄▄ ▐░█▄▄▄▄▄▄▄▄▄ ▐░▌       ▐░▌
-        ▐░░░░░░░░░░▌ ▐░▌       ▐░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░▌       ▐░▌
-         ▀▀▀▀▀▀▀▀▀▀   ▀         ▀  ▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀▀  ▀         ▀ 
+        
+        ██████   █████  ██ ██       █████      
+        ██   ██ ██   ██ ██ ██      ██   ██     
+        ██   ██ ███████ ██ ██      ███████     
+        ██   ██ ██   ██ ██ ██      ██   ██     
+        ██████  ██   ██ ██ ███████ ██   ██
         
         The Decompiler AI Language Assistant                                                         
         """))
@@ -69,10 +64,16 @@ class DAILAInstaller(PluginInstaller):
 
     def display_epilogue(self):
         super().display_epilogue()
-        if VARMODEL_AVAILABLE:
-            self.info("We will now download local moodle for each decompiler you've installed. Ctrl+C to cancel.")
-            from varmodel import install_model as install_varmodel_model
-            for target in self._successful_installs:
-                install_varmodel_model(target, opt_level="O0")
+        print("")
+        self.install_local_models()
 
-            self.info("Installs completed!")
+    def install_local_models(self):
+        if VARMODEL_AVAILABLE:
+            self.info("We will now download local models for each decompiler you've installed. Ctrl+C to cancel.")
+            self.install_varmodel_models()
+
+    def install_varmodel_models(self):
+        self.info("Installing VarModel models...")
+        from varmodel import install_model as install_varmodel_model
+        for target in self._successful_installs:
+            install_varmodel_model(target, opt_level="O0")

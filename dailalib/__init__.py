@@ -12,6 +12,7 @@ except ImportError:
 
 
 def create_plugin(*args, **kwargs):
+
     #
     # OpenAI API (ChatGPT)
     #
