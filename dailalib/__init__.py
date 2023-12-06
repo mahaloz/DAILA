@@ -1,4 +1,4 @@
-__version__ = "2.0.0"
+__version__ = "2.1.0"
 
 from .api import AIAPI, OpenAIAPI
 from libbs.api import DecompilerInterface
@@ -6,16 +6,32 @@ from libbs.api import DecompilerInterface
 
 def create_plugin(*args, **kwargs):
 
-    ai_api = OpenAIAPI(delay_init=True)
+    #
+    # OpenAI API (ChatGPT)
+    #
+
+    openai_api = OpenAIAPI(delay_init=True)
     # create context menus for prompts
     gui_ctx_menu_actions = {
-        f"DAILA/{prompt_name}": (prompt.desc, getattr(ai_api, prompt_name))
-        for prompt_name, prompt in ai_api.prompts_by_name.items()
+        f"DAILA/OpenAI/{prompt_name}": (prompt.desc, getattr(openai_api, prompt_name))
+        for prompt_name, prompt in openai_api.prompts_by_name.items()
     }
     # create context menus for others
-    gui_ctx_menu_actions["DAILA/Update API Key"] = ("Update API Key", ai_api.ask_api_key)
+    gui_ctx_menu_actions["DAILA/OpenAI/update_api_key"] = ("Update API Key", openai_api.ask_api_key)
 
-    # create decompiler interface
+    #
+    # VarModel API (local variable renaming)
+    #
+
+    from varbert import VariableRenamingAPI
+    var_api = VariableRenamingAPI(delay_init=True)
+    # add single interface, which is to rename variables
+    gui_ctx_menu_actions["DAILA/VarBERT/varbert_rename_vars"] = ("Suggest new variable names", var_api.query_model)
+
+    #
+    # Decompiler Plugin Registration
+    #
+
     force_decompiler = kwargs.pop("force_decompiler", None)
     deci = DecompilerInterface.discover_interface(
         force_decompiler=force_decompiler,
@@ -26,6 +42,9 @@ def create_plugin(*args, **kwargs):
         ui_init_args=args,
         ui_init_kwargs=kwargs
     )
-    ai_api.init_decompiler_interface(decompiler_interface=deci)
+
+    openai_api.init_decompiler_interface(decompiler_interface=deci)
+    if var_api is not None:
+        var_api.init_decompiler_interface(decompiler_interface=deci)
 
     return deci.gui_plugin

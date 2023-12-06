@@ -7,7 +7,7 @@ from libbs.plugin_installer import PluginInstaller
 
 class DAILAInstaller(PluginInstaller):
     def __init__(self):
-        super().__init__(targets=("ida", "ghidra", "binja"))
+        super().__init__(targets=("ida", "ghidra", "binja", "angr"))
         self.pkg_path = Path(str(importlib.resources.files("dailalib"))).absolute()
 
     def _copy_plugin_to_path(self, path):
@@ -18,17 +18,12 @@ class DAILAInstaller(PluginInstaller):
     def display_prologue(self):
         print(textwrap.dedent("""
         Now installing...
-         ▄▄▄▄▄▄▄▄▄▄   ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄            ▄▄▄▄▄▄▄▄▄▄▄ 
-        ▐░░░░░░░░░░▌ ▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░▌          ▐░░░░░░░░░░░▌
-        ▐░█▀▀▀▀▀▀▀█░▌▐░█▀▀▀▀▀▀▀█░▌ ▀▀▀▀█░█▀▀▀▀ ▐░▌          ▐░█▀▀▀▀▀▀▀█░▌
-        ▐░▌       ▐░▌▐░▌       ▐░▌     ▐░▌     ▐░▌          ▐░▌       ▐░▌
-        ▐░▌       ▐░▌▐░█▄▄▄▄▄▄▄█░▌     ▐░▌     ▐░▌          ▐░█▄▄▄▄▄▄▄█░▌
-        ▐░▌       ▐░▌▐░░░░░░░░░░░▌     ▐░▌     ▐░▌          ▐░░░░░░░░░░░▌
-        ▐░▌       ▐░▌▐░█▀▀▀▀▀▀▀█░▌     ▐░▌     ▐░▌          ▐░█▀▀▀▀▀▀▀█░▌
-        ▐░▌       ▐░▌▐░▌       ▐░▌     ▐░▌     ▐░▌          ▐░▌       ▐░▌
-        ▐░█▄▄▄▄▄▄▄█░▌▐░▌       ▐░▌ ▄▄▄▄█░█▄▄▄▄ ▐░█▄▄▄▄▄▄▄▄▄ ▐░▌       ▐░▌
-        ▐░░░░░░░░░░▌ ▐░▌       ▐░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░▌       ▐░▌
-         ▀▀▀▀▀▀▀▀▀▀   ▀         ▀  ▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀▀  ▀         ▀ 
+        
+        ██████   █████  ██ ██       █████      
+        ██   ██ ██   ██ ██ ██      ██   ██     
+        ██   ██ ███████ ██ ██      ███████     
+        ██   ██ ██   ██ ██ ██      ██   ██     
+        ██████  ██   ██ ██ ███████ ██   ██
         
         The Decompiler AI Language Assistant                                                         
         """))
@@ -64,3 +59,18 @@ class DAILAInstaller(PluginInstaller):
 
         self._copy_plugin_to_path(path)
         return path
+
+    def display_epilogue(self):
+        super().display_epilogue()
+        print("")
+        self.install_local_models()
+
+    def install_local_models(self):
+        self.info("We will now download local models for each decompiler you've installed. Ctrl+C to cancel.")
+        self.install_varmodel_models()
+
+    def install_varmodel_models(self):
+        self.info("Installing VarBERT models...")
+        from varbert import install_model as install_varbert_model
+        for target in self._successful_installs:
+            install_varbert_model(target, opt_level="O0")

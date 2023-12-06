@@ -10,13 +10,14 @@ classifiers = [
     "Programming Language :: Python :: 3.8",
 ]
 license = {text = "BSD 2 Clause"}
-description = "Decompiler Artificial Intelligence Language Assistant"
+description = "The Decompiler Artificial Intelligence Language Assistant (DAILA) is a tool for adding AI to decompilers."
 urls = {Homepage = "https://github.com/mahaloz/DAILA"}
 requires-python = ">= 3.8"
 dependencies = [
     "openai>=1.0.0",
     "libbs",
     "tiktoken",
+    "varbert>=2.0.1"
 ]
 dynamic = ["version"]
 
