@@ -18,6 +18,9 @@ def main():
         "-i", "--install", action="store_true", help="Install DAILA into your decompilers"
     )
     parser.add_argument(
+        "--single-decompiler-install", nargs=2, metavar=('decompiler', 'path'), help="Install DAILA into a single decompiler. Decompiler must be one of: ida, ghidra, binja, angr."
+    )
+    parser.add_argument(
         "-s", "--server", help="Run a a headless server for DAILA", choices=["ghidra"]
     )
     parser.add_argument(
@@ -25,7 +28,10 @@ def main():
     )
     args = parser.parse_args()
 
-    if args.install:
+    if args.single_decompiler_install:
+        decompiler, path = args.single_decompiler_install
+        DAILAInstaller().install(interactive=False, paths_by_target={decompiler: path})
+    elif args.install:
         DAILAInstaller().install()
     elif args.server:
         if args.server != "ghidra":

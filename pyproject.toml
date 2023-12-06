@@ -15,7 +15,7 @@ urls = {Homepage = "https://github.com/mahaloz/DAILA"}
 requires-python = ">= 3.8"
 dependencies = [
     "openai>=1.0.0",
-    "libbs",
+    "libbs>=0.6.10",
     "tiktoken",
     "varbert>=2.0.2"
 ]
