@@ -17,7 +17,7 @@ dependencies = [
     "openai>=1.0.0",
     "libbs",
     "tiktoken",
-    "varbert>=2.0.1"
+    "varbert>=2.0.2"
 ]
 dynamic = ["version"]
 
