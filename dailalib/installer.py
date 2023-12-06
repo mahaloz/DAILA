@@ -4,8 +4,6 @@ import importlib.resources
 
 from libbs.plugin_installer import PluginInstaller
 
-from dailalib import VARMODEL_AVAILABLE
-
 
 class DAILAInstaller(PluginInstaller):
     def __init__(self):
@@ -68,12 +66,11 @@ class DAILAInstaller(PluginInstaller):
         self.install_local_models()
 
     def install_local_models(self):
-        if VARMODEL_AVAILABLE:
-            self.info("We will now download local models for each decompiler you've installed. Ctrl+C to cancel.")
-            self.install_varmodel_models()
+        self.info("We will now download local models for each decompiler you've installed. Ctrl+C to cancel.")
+        self.install_varmodel_models()
 
     def install_varmodel_models(self):
-        self.info("Installing VarModel models...")
-        from varmodel import install_model as install_varmodel_model
+        self.info("Installing VarBERT models...")
+        from varbert import install_model as install_varbert_model
         for target in self._successful_installs:
-            install_varmodel_model(target, opt_level="O0")
+            install_varbert_model(target, opt_level="O0")

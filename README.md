@@ -1,12 +1,15 @@
 # DAILA 
 The Decompiler Artificial Intelligence Language Assistant (DAILA) is a unified interface for AI systems to be used in decompilers.
 Using DAILA, you can utilize various AI systems, like local and remote LLMs, all in the same scripting and GUI interfaces.
+Power up your decompilation experience with AI!
 
 ![](./assets/ida_daila.png)
 
-DAILA's main purpose is to provide a unified interface for AI systems to be used in decompilers.
-To accomplish this, DAILA provides a lifted interface, relying on the BinSync library [LibBS](https://github.com/binsync/libbs) to abstract away the decompiler.
+DAILA provides a lifted interface, relying on the BinSync library [LibBS](https://github.com/binsync/libbs) to abstract away the decompiler.
 **All decompilers supported in LibBS are supported in DAILA, which currently includes IDA, Ghidra, Binja, and angr-management.**
+Currently, there are two AI systems supported in DAILA: [OpenAI](https://openai.com/) and [VarBERT](https://github.com/binsync/varbert_api), 
+the latter of which is a local model for renaming variables in decompilation published in S&P 2024. 
+
 
 ## Installation
 Install our library backend through pip and our decompiler plugin through our installer:
@@ -14,7 +17,9 @@ Install our library backend through pip and our decompiler plugin through our in
 pip3 install dailalib && daila --install 
 ```
 
-### Ghidra Extras
+This will also download the VarBERT models for you through the [VarBERT API](https://github.com/binsync/varbert_api).
+
+### Ghidra Extra Steps
 You need to do a few extra steps to get Ghidra working.
 Next, enable the DAILA plugin:
 1. Start Ghidra and open a binary
@@ -58,7 +63,7 @@ for function in deci.functions:
 
 
 ## Supported AI Backends
-### OpenAI
+### OpenAI (ChatGPT)
 DAILA supports the OpenAI API. To use the OpenAI API, you must have an OpenAI API key.
 If your decompiler does not have access to the `OPENAI_API_KEY` environment variable, then you must use the decompiler option from
 DAILA to set the API key.
@@ -68,6 +73,13 @@ Currently, DAILA supports the following prompts:
 - Rename variables
 - Rename function
 - Identify the source of a function
+
+### VarBERT
+VarBERT is a local BERT model from the S&P 2024 paper [""Len or index or count, anything but v1": Predicting Variable Names in Decompilation Output with Transfer Learning"]().
+VarBERT is for renaming variables (both stack, register, and arguments) in decompilation.
+To understand how to use VarBERT as a library, please see the [VarBERT API](https://github.com/binsync/varbert_api) documentation.
+Using it in DAILA is a simple as using the GUI context-menu when clicking on a function. 
+
 
 ## Supported Decompilers
 - IDA
