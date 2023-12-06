@@ -38,7 +38,7 @@ DAILA is designed to be used in two ways:
 With the exception of Ghidra (see below), when you start your decompiler you will have a new context menu 
 which you can access when you right-click anywhere in a function:
 
-<img src="./assets/ida_show_menu_daila.png" style="width: 50%;" alt="DAILA context menu"/>
+<img src="./assets/ida_daila.png" style="width: 50%;" alt="DAILA context menu"/>
 
 If you are using Ghidra, go to `Tools->DAILA->Start DAILA Backend` to start the backend server.
 After you've done this, you can use the context menu as shown above.
