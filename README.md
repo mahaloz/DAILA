@@ -1,7 +1,7 @@
 # DAILA 
 The Decompiler Artificial Intelligence Language Assistant (DAILA) is a unified interface for AI systems to be used in decompilers.
 Using DAILA, you can utilize various AI systems, like local and remote LLMs, all in the same scripting and GUI interfaces.
-Power up your decompilation experience with AI!
+DAILA was featured in the keynote talk at [HITCON CTM 2023](https://hitcon.org/2023/CMT/en/). 
 
 ![](./assets/ida_daila.png)
 
@@ -9,7 +9,7 @@ DAILA provides a lifted interface, relying on the BinSync library [LibBS](https:
 **All decompilers supported in LibBS are supported in DAILA, which currently includes IDA, Ghidra, Binja, and angr-management.**
 Currently, there are two AI systems supported in DAILA: [OpenAI](https://openai.com/) and [VarBERT](https://github.com/binsync/varbert_api), 
 the latter of which is a local model for renaming variables in decompilation published in S&P 2024. 
-
+If you are looking for a demo of DAILA, please see the [Demo](#demo) section.
 
 ## Installation
 Install our library backend through pip and our decompiler plugin through our installer:
@@ -95,6 +95,11 @@ VarBERT is a local BERT model from the S&P 2024 paper [""Len or index or count, 
 VarBERT is for renaming variables (both stack, register, and arguments) in decompilation.
 To understand how to use VarBERT as a library, please see the [VarBERT API](https://github.com/binsync/varbert_api) documentation.
 Using it in DAILA is a simple as using the GUI context-menu when clicking on a function. 
+
+## Demo
+You can find a demo of VarBERT running inside DAILA below:
+
+[![VarBERT Demo](https://img.youtube.com/vi/nUazQm8sFL8/0.jpg)](https://youtu.be/nUazQm8sFL8 "DAILA v2.1.4: Renaming variables with local VarBERT model")
 
 
 ## Supported Decompilers
