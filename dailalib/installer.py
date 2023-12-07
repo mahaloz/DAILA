@@ -28,7 +28,7 @@ class DAILAInstaller(LibBSPluginInstaller):
         """))
 
     def install_ida(self, path=None, interactive=True):
-        path = path or super().install_ida(path=path, interactive=interactive)
+        path = super().install_ida(path=path, interactive=interactive)
         if not path:
             return
 
@@ -36,7 +36,7 @@ class DAILAInstaller(LibBSPluginInstaller):
         return path
 
     def install_ghidra(self, path=None, interactive=True):
-        path = path or super().install_ghidra(path=path, interactive=interactive)
+        path = super().install_ghidra(path=path, interactive=interactive)
         if not path:
             return
 
@@ -44,7 +44,7 @@ class DAILAInstaller(LibBSPluginInstaller):
         return path
 
     def install_binja(self, path=None, interactive=True):
-        path = path or super().install_binja(path=path, interactive=interactive)
+        path = super().install_binja(path=path, interactive=interactive)
         if not path:
             return
 
@@ -52,7 +52,7 @@ class DAILAInstaller(LibBSPluginInstaller):
         return path
 
     def install_angr(self, path=None, interactive=True):
-        path = path or super().install_angr(path=path, interactive=interactive)
+        path = super().install_angr(path=path, interactive=interactive)
         if not path:
             return
 
