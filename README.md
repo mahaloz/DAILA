@@ -111,3 +111,6 @@ You can find a demo of VarBERT running inside DAILA below:
 
 - Ghidra
 ![](./assets/ghidra_daila.png)
+
+- angr management
+![](./assets/am_daila.png)

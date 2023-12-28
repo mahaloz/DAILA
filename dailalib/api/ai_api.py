@@ -1,5 +1,6 @@
 from typing import Dict, Optional
 from functools import wraps
+import threading
 
 from libbs.api import DecompilerInterface
 
