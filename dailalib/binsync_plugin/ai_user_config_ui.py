@@ -165,7 +165,6 @@ class AIUserConfigDialog(QDialog):
             globals()['workspace'] = self._controller.workspace
             arch = self._controller.main_instance.project.arch.name
 
-        #import remote_pdb; remote_pdb.RemotePdb("localhost", 4444).set_trace()
         add_ai_user_to_project(
             self.api_key, self.binary_path, self.project_path, username=self.username,
             base_on=self.base_on, headless=True if self.decompiler_backend else False, copy_proj=True, model=self.model,
