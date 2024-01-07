@@ -1,6 +1,6 @@
 import typing
 
-from libbs.data import Comment
+from libbs.artifacts import Comment
 
 from .prompt import Prompt
 
