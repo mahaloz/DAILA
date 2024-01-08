@@ -1,4 +1,4 @@
-__version__ = "2.2.1"
+__version__ = "2.2.2"
 
 from .api import AIAPI, OpenAIAPI
 from libbs.api import DecompilerInterface
@@ -33,7 +33,7 @@ def create_plugin(*args, **kwargs):
     #
 
     force_decompiler = kwargs.pop("force_decompiler", None)
-    deci = DecompilerInterface.discover_interface(
+    deci = DecompilerInterface.discover(
         force_decompiler=force_decompiler,
         # decompiler-creation args
         plugin_name="DAILA",

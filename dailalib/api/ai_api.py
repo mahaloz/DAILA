@@ -34,7 +34,7 @@ class AIAPI:
         decompiler_name: Optional[str] = None,
         use_decompiler: bool = True
     ):
-        self._dec_interface: DecompilerInterface = DecompilerInterface.discover_interface(force_decompiler=decompiler_name) \
+        self._dec_interface: DecompilerInterface = DecompilerInterface.discover(force_decompiler=decompiler_name) \
             if use_decompiler and decompiler_interface is None else decompiler_interface
         self._dec_name = decompiler_name if decompiler_interface is None else decompiler_interface.name
         if self._dec_interface is None and not self._dec_name:

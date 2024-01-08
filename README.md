@@ -56,7 +56,7 @@ Here is an example using the OpenAI API:
 from dailalib import OpenAIAPI
 from libbs.api import DecompilerInterface
 
-deci = DecompilerInterface.discover_interface()
+deci = DecompilerInterface.discover()
 ai_api = OpenAIAPI(decompiler_interface=deci)
 for function in deci.functions:
     summary = ai_api.summarize_function(function)
