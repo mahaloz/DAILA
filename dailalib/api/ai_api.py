@@ -93,7 +93,9 @@ class AIAPI:
 
                 # we must have a UI if we have no func
                 if function is None:
-                    function = ai_api._dec_interface.functions[ai_api._dec_interface.active_context().addr]
+                    function = ai_api._dec_interface.art_lifter.lower(
+                        ai_api._dec_interface.functions[ai_api._dec_interface.active_context().addr]
+                    )
 
                 # get new text with the function that is present
                 if dec_text is None:
