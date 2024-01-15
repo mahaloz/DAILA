@@ -29,11 +29,12 @@ if sys.version[0] == "2":
     failed_py3 = False
     try:
         process = subprocess.Popen(full_command.split(" "))
+        failed_py3 = process.poll() is not None
     except:
         failed_py3 = True
 
     if failed_py3:
-        print("Couldn't find python3 in your path. Trying python...")
+        print("python3 command failed. Trying python...")
         full_command = full_command.replace("python3", "python")
         process = subprocess.Popen(full_command.split(" "))
 

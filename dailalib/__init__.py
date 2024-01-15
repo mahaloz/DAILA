@@ -1,4 +1,4 @@
-__version__ = "2.2.4"
+__version__ = "2.2.5"
 
 from .api import AIAPI, OpenAIAPI
 from libbs.api import DecompilerInterface
