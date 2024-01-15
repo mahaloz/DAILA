@@ -4,9 +4,8 @@
 # @menupath Tools.DAILA.Start DAILA Backend
 
 
-# replace this with the command to run your plugin remotely
-library_command = "dailalib -s ghidra"
-# replace this imporate with an import of your plugin's create_plugin function
+python_library_command = "dailalib -s ghidra"
+shell_library_command = "daila -s ghidra"
 def create_plugin(*args, **kwargs):
     from dailalib import create_plugin as _create_plugin
     return _create_plugin(*args, **kwargs)
@@ -22,22 +21,14 @@ if sys.version[0] == "2":
     # Do Ghidra Py2 entry point
     import subprocess
     from libbs_vendored.ghidra_bridge_server import GhidraBridgeServer
-    full_command = "python3 -m " + library_command
+    from distutils.spawn import find_executable
+    cmd = shell_library_command.split(" ") if shell_library_command else python_library_command.split(" ")
+    if not find_executable(cmd[0]):
+        # fallback to doing a python command
+        cmd = python_library_command.split(" ")
 
     GhidraBridgeServer.run_server(background=True)
-
-    failed_py3 = False
-    try:
-        process = subprocess.Popen(full_command.split(" "))
-        failed_py3 = process.poll() is not None
-    except:
-        failed_py3 = True
-
-    if failed_py3:
-        print("python3 command failed. Trying python...")
-        full_command = full_command.replace("python3", "python")
-        process = subprocess.Popen(full_command.split(" "))
-
+    process = subprocess.Popen(cmd)
     if process.poll() is not None:
         raise RuntimeError(
             "Failed to run the Python3 backed. It's likely Python3 is not in your Path inside Ghidra.")
