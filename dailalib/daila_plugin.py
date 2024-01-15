@@ -25,7 +25,18 @@ if sys.version[0] == "2":
     full_command = "python3 -m " + library_command
 
     GhidraBridgeServer.run_server(background=True)
-    process = subprocess.Popen(full_command.split(" "))
+
+    failed_py3 = False
+    try:
+        process = subprocess.Popen(full_command.split(" "))
+    except:
+        failed_py3 = True
+
+    if failed_py3:
+        print("Couldn't find python3 in your path. Trying python...")
+        full_command = full_command.replace("python3", "python")
+        process = subprocess.Popen(full_command.split(" "))
+
     if process.poll() is not None:
         raise RuntimeError(
             "Failed to run the Python3 backed. It's likely Python3 is not in your Path inside Ghidra.")
