@@ -1,4 +1,4 @@
-__version__ = "2.2.6"
+__version__ = "2.2.7"
 
 from .api import AIAPI, OpenAIAPI
 from libbs.api import DecompilerInterface
@@ -39,8 +39,8 @@ def create_plugin(*args, **kwargs):
         plugin_name="DAILA",
         init_plugin=True,
         gui_ctx_menu_actions=gui_ctx_menu_actions,
-        ui_init_args=args,
-        ui_init_kwargs=kwargs
+        gui_init_args=args,
+        gui_init_kwargs=kwargs
     )
 
     openai_api.init_decompiler_interface(decompiler_interface=deci)
