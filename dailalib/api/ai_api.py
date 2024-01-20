@@ -18,7 +18,7 @@ class AIAPI:
         model=None,
     ):
         # useful for initing after the creation of a decompiler interface
-        self._dec_interface: Optional[DecompilerInterface] = None
+        self._dec_interface: DecompilerInterface = None
         self._dec_name = None
         self._delay_init = delay_init
         if not self._delay_init:
@@ -93,9 +93,7 @@ class AIAPI:
 
                 # we must have a UI if we have no func
                 if function is None:
-                    function = ai_api._dec_interface.art_lifter.lower(
-                        ai_api._dec_interface.functions[ai_api._dec_interface.active_context().addr]
-                    )
+                    function = ai_api._dec_interface.functions[ai_api._dec_interface.gui_active_context().addr]
 
                 # get new text with the function that is present
                 if dec_text is None:
