@@ -1,4 +1,4 @@
-__version__ = "2.2.8"
+__version__ = "2.3.0"
 
 from .api import AIAPI, OpenAIAPI
 from libbs.api import DecompilerInterface
@@ -30,7 +30,7 @@ def create_plugin(*args, **kwargs):
     def make_callback(predict_for_all_variables):
         return lambda *args, **kwargs: var_api.query_model(*args, **kwargs, remove_bad_names=not predict_for_all_variables)
 
-    gui_ctx_menu_actions["DAILA/VarBERT/varbert_rename_vars"] = ("Suggest new variable names", make_callback(predict_for_all_variables=False))
+    gui_ctx_menu_actions["DAILA/VarBERT/varbert_rename_vars"] = ("Suggest new variable names (source-like only)", make_callback(predict_for_all_variables=False))
     gui_ctx_menu_actions["DAILA/VarBERT/varbert_rename_vars_all"] = ("Suggest new variable names (for all variables)", make_callback(predict_for_all_variables=True))
 
     #
