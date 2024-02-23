@@ -25,8 +25,13 @@ def create_plugin(*args, **kwargs):
 
     from varbert.api import VariableRenamingAPI
     var_api = VariableRenamingAPI(delay_init=True)
+
     # add single interface, which is to rename variables
-    gui_ctx_menu_actions["DAILA/VarBERT/varbert_rename_vars"] = ("Suggest new variable names", var_api.query_model)
+    def make_callback(predict_for_all_variables):
+        return lambda *args, **kwargs: var_api.query_model(*args, **kwargs, remove_bad_names=not predict_for_all_variables)
+
+    gui_ctx_menu_actions["DAILA/VarBERT/varbert_rename_vars"] = ("Suggest new variable names", make_callback(predict_for_all_variables=False))
+    gui_ctx_menu_actions["DAILA/VarBERT/varbert_rename_vars_all"] = ("Suggest new variable names (for all variables)", make_callback(predict_for_all_variables=True))
 
     #
     # Decompiler Plugin Registration
