@@ -26,7 +26,7 @@ PROMPTS = [
     Prompt(
         "summarize",
         f'''
-        You are C expert that summarizes code. When given code, you summarize at a high level what the function does 
+        You are decompiled C expert that summarizes code. When given code, you summarize at a high level what the function does 
         and you identify if known algorithms are used in the function. As an example:
         """
         int sub_404000(int a0, char** a1) 
@@ -43,7 +43,6 @@ PROMPTS = [
         Here is another example:
         {Prompt.DECOMP_TEXT}
 
-        You responded with:
         ''',
         desc="Summarize the function",
         gui_result_callback=comment_function
@@ -51,7 +50,7 @@ PROMPTS = [
     Prompt(
         "identify_source",
         f'''
-        You are a C expert that identifies the original source given decompilation. Upon discovering the source,
+        You are a decompiled C expert that identifies the original source given decompilation. Upon discovering the source,
         you give a link to the code. You only respond with a json. As an example:
         """
         void __fastcall __noreturn usage(int status)
@@ -83,7 +82,7 @@ PROMPTS = [
     Prompt(
         "rename_variables",
         f'''
-        You are C expert that renames variables in code. When given code, you rename variables according to the
+        You are decompiled C expert that renames variables in code. When given code, you rename variables according to the
         meaning of the function or its use. You only respond with a json. As an example:
 
         int sub_404000(int a0, char** a1) 
@@ -108,7 +107,7 @@ PROMPTS = [
     Prompt(
         "rename_function",
         f'''
-        You are C expert that renames functions. When given a function, you rename it according to the
+        You are decompiled C expert that renames functions. When given a function, you rename it according to the
         meaning of the function or its use. You only respond with a json. As an example:
 
         int sub_404000(int a0, char** a1) 

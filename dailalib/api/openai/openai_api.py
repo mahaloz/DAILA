@@ -12,8 +12,9 @@ if typing.TYPE_CHECKING:
 
 class OpenAIAPI(AIAPI):
     prompts_by_name = []
-    DEFAULT_MODEL = "gpt-4"
+    DEFAULT_MODEL = "gpt-4o"
     MODEL_TO_TOKENS = {
+        "gpt-4o": 8000,
         "gpt-4": 8000,
         "gpt-3.5-turbo": 4096
     }
@@ -82,7 +83,7 @@ class OpenAIAPI(AIAPI):
 
     @staticmethod
     def estimate_token_amount(content: str, model=DEFAULT_MODEL):
-        enc = tiktoken.encoding_for_model(model)
+        enc = tiktoken.encoding_for_model("gpt-4" if model.startswith("gpt-4") else model)
         tokens = enc.encode(content)
         return len(tokens)
 

@@ -78,7 +78,7 @@ class Prompt:
             if ai_api.has_decompiler_gui and response:
                 self._gui_result_callback(response, function, ai_api)
 
-            ai_api.info(f"Reponse recieved...")
+            ai_api.info(f"Response recieved...")
             return response
         return _query_model(ai_api=self.ai_api, function=function, dec_text=dec_text, use_dec=use_dec)
 
