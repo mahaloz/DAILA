@@ -34,6 +34,13 @@ def create_plugin(*args, **kwargs):
     gui_ctx_menu_actions["DAILA/VarBERT/varbert_rename_vars_all"] = ("Suggest new variable names (for all variables)", make_callback(predict_for_all_variables=True))
 
     #
+    # General LLM settings
+    #
+
+    # create context menus for others
+    gui_ctx_menu_actions["DAILA/OpenAI/update_pmpt_style"] = ("Change prompt style...", openai_api.gui_update_prompt_style)
+
+    #
     # Decompiler Plugin Registration
     #
 
