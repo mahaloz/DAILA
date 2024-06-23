@@ -54,6 +54,7 @@ def create_plugin(*args, **kwargs):
         gui_init_args=args,
         gui_init_kwargs=kwargs
     )
+    deci.info("DAILA backend loaded! Initializing context menus now...")
 
     openai_api.init_decompiler_interface(decompiler_interface=deci)
     if var_api is not None:

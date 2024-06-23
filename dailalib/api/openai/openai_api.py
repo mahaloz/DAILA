@@ -36,6 +36,7 @@ class OpenAIAPI(AIAPI):
         return list(super().__dir__()) + list(self.prompts_by_name.keys())
 
     def __getattribute__(self, item):
+        # this is how we can access the prompt functions
         if item in object.__getattribute__(self, "prompts_by_name"):
             prompt_obj: "Prompt" = self.prompts_by_name[item]
             prompt_obj.ai_api = self

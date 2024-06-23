@@ -75,10 +75,19 @@ class Prompt:
             else:
                 response += self._posttext_response if self._pretext_response else ""
 
+            if isinstance(response, dict) or isinstance(response, str):
+                resp_len = len(response)
+                if resp_len:
+                    ai_api.info(f"Response of len={resp_len} received from AI...")
+                else:
+                    ai_api.warning(f"Response recieved from AI, but it was empty! AI failed to answer.")
+            else:
+                ai_api.info("Reponse received from AI!")
+
             if ai_api.has_decompiler_gui and response:
+                ai_api.info("Updating the decompiler with the AI response...")
                 self._gui_result_callback(response, function, ai_api)
 
-            ai_api.info(f"Response recieved...")
             return response
         return _query_model(ai_api=self.ai_api, function=function, dec_text=dec_text, use_dec=use_dec)
 
