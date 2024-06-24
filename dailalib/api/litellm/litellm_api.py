@@ -6,7 +6,6 @@ from litellm import completion
 import tiktoken
 
 from ..ai_api import AIAPI
-from .prompts.prompt_type import PromptType, DEFAULT_STYLE, ALL_STYLES
 
 class LiteLLMAIAPI(AIAPI):
     prompts_by_name = []
@@ -27,10 +26,10 @@ class LiteLLMAIAPI(AIAPI):
         # default to openai api key if not provided
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
         self.model = model
-        self.prompt_style = DEFAULT_STYLE
 
         # delay prompt import
-        from dailalib.api.litellm.prompts import PROMPTS
+        from .prompts import PROMPTS, DEFAULT_STYLE
+        self.prompt_style = DEFAULT_STYLE
         prompts = prompts + PROMPTS if prompts else PROMPTS
         self.prompts_by_name = {p.name: p for p in prompts}
 
@@ -126,6 +125,8 @@ class LiteLLMAIAPI(AIAPI):
 
     def ask_prompt_style(self):
         if self._dec_interface is not None:
+            from .prompts import ALL_STYLES
+
             style_choices = ALL_STYLES.copy()
             style_choices.remove(self.prompt_style)
             style_choices = [self.prompt_style] + style_choices
