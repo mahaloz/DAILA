@@ -1,6 +1,5 @@
-from typing import Dict, Optional
+from typing import Optional
 from functools import wraps
-import threading
 
 from libbs.api import DecompilerInterface
 
@@ -39,7 +38,6 @@ class AIAPI:
         self._dec_name = decompiler_name if decompiler_interface is None else decompiler_interface.name
         if self._dec_interface is None and not self._dec_name:
             raise ValueError("You must either provide a decompiler name or a decompiler interface.")
-
     def info(self, msg):
         if self._dec_interface is not None:
             self._dec_interface.info(msg)

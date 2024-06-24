@@ -3,7 +3,7 @@ from typing import Dict
 
 from binsync.data import Function, StackVariable, Comment, State, FunctionHeader
 
-from dailalib.api import OpenAIAPI
+from dailalib.api import LiteLLMAIAPI
 from dailalib.binsync_plugin.ai_bs_user import AIBSUser
 
 _l = logging.getLogger(__name__)
@@ -14,7 +14,7 @@ class OpenAIBSUser(AIBSUser):
 
     def __init__(self, openai_api_key,  *args, **kwargs):
         super().__init__(openai_api_key, *args, **kwargs)
-        self.ai_interface = OpenAIAPI(openai_api_key=openai_api_key, decompiler_controller=self.controller, model=self._model)
+        self.ai_interface = LiteLLMAIAPI(openai_api_key=openai_api_key, decompiler_controller=self.controller, model=self._model)
 
     def run_all_ai_commands_for_dec(self, decompilation: str, func: Function, state: State):
         changes = 0

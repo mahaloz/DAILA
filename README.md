@@ -1,15 +1,25 @@
 # DAILA 
 The Decompiler Artificial Intelligence Language Assistant (DAILA) is a unified interface for AI systems to be used in decompilers.
-Using DAILA, you can utilize various AI systems, like local and remote LLMs, all in the same scripting and GUI interfaces.
+Using DAILA, you can utilize various AI systems, like local and remote LLMs, all in the same scripting and GUI interfaces across many decompilers.
 DAILA was featured in the keynote talk at [HITCON CMT 2023](https://hitcon.org/2023/CMT/en/). 
 
 ![](./assets/ida_daila.png)
 
-DAILA provides a lifted interface, relying on the BinSync library [LibBS](https://github.com/binsync/libbs) to abstract away the decompiler.
-**All decompilers supported in LibBS are supported in DAILA, which currently includes IDA, Ghidra, Binja, and angr-management.**
-Currently, there are two AI systems supported in DAILA: [OpenAI](https://openai.com/) and [VarBERT](https://github.com/binsync/varbert_api), 
-the latter of which is a local model for renaming variables in decompilation published in S&P 2024. 
-If you are looking for a demo of DAILA, please see the [Demo](#demo) section.
+## Supported Decompilers and AI Systems
+DAILA interacts with the decompiler abstractly through the [LibBS](https://github.com/binsync/libbs) library.
+This allows DAILA to support the following decompilers:
+- IDA Pro: **>= 7.3**
+- Ghidra: **>= 10.1**
+- Binary Ninja: **>= 2.4**
+- angr-management: **>= 9.0**
+
+DAILA supports any LLM supported in [LiteLLM](https://github.com/BerriAI/litellm), such as:
+- ChatGPT
+- Claude
+- Llama2
+- and more...
+
+DAILA also supports local models of different types, like [VarBERT](https://github.com/binsync/varbert_api), a local model for renaming variables in decompilation published in S&P 2024.
 
 ## Installation
 Install our library backend through pip and our decompiler plugin through our installer:
@@ -52,12 +62,13 @@ After you've done this, you can use the context menu as shown above.
 ### Scripting
 You can use DAILA in your own scripts by importing the `dailalib` package.
 Here is an example using the OpenAI API:
+
 ```python
-from dailalib import OpenAIAPI
+from dailalib import LiteLLMAIAPI
 from libbs.api import DecompilerInterface
 
 deci = DecompilerInterface.discover()
-ai_api = OpenAIAPI(decompiler_interface=deci)
+ai_api = LiteLLMAIAPI(decompiler_interface=deci)
 for function in deci.functions:
     summary = ai_api.summarize_function(function)
 ```
@@ -80,7 +91,9 @@ Now follow the [Ghidra Extra Steps](#ghidra-extra-steps) to enable the DAILA plu
 
 ## Supported AI Backends
 ### OpenAI (ChatGPT)
-DAILA supports the OpenAI API. To use the OpenAI API, you must have an OpenAI API key.
+DAILA supports the LiteLLM API, which in turn supports various backends like OpenAI. 
+To use a commercial LLM API, you must provide your own API key.
+As an example, to use the OpenAI API, you must have an OpenAI API key.
 If your decompiler does not have access to the `OPENAI_API_KEY` environment variable, then you must use the decompiler option from
 DAILA to set the API key.
 
