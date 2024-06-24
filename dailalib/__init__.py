@@ -10,16 +10,16 @@ def create_plugin(*args, **kwargs):
     # LLM API (through LiteLLM api)
     #
 
-    openai_api = LiteLLMAIAPI(delay_init=True)
+    litellm_api = LiteLLMAIAPI(delay_init=True)
     # create context menus for prompts
     gui_ctx_menu_actions = {
-        f"DAILA/LLM/{prompt_name}": (prompt.desc, getattr(openai_api, prompt_name))
-        for prompt_name, prompt in openai_api.prompts_by_name.items()
+        f"DAILA/LLM/{prompt_name}": (prompt.desc, getattr(litellm_api, prompt_name))
+        for prompt_name, prompt in litellm_api.prompts_by_name.items()
     }
     # create context menus for others
-    gui_ctx_menu_actions["DAILA/LLM/update_api_key"] = ("Update API key...", openai_api.ask_api_key)
-    gui_ctx_menu_actions["DAILA/LLM/update_pmpt_style"] = ("Change prompt style...", openai_api.ask_prompt_style)
-    gui_ctx_menu_actions["DAILA/LLM/update_model"] = ("Change model...", openai_api.ask_model)
+    gui_ctx_menu_actions["DAILA/LLM/update_api_key"] = ("Update API key...", litellm_api.ask_api_key)
+    gui_ctx_menu_actions["DAILA/LLM/update_pmpt_style"] = ("Change prompt style...", litellm_api.ask_prompt_style)
+    gui_ctx_menu_actions["DAILA/LLM/update_model"] = ("Change model...", litellm_api.ask_model)
 
 
     #
@@ -52,7 +52,7 @@ def create_plugin(*args, **kwargs):
     )
     deci.info("DAILA backend loaded! Initializing context menus now...")
 
-    openai_api.init_decompiler_interface(decompiler_interface=deci)
+    litellm_api.init_decompiler_interface(decompiler_interface=deci)
     if var_api is not None:
         var_api.init_decompiler_interface(decompiler_interface=deci)
 
