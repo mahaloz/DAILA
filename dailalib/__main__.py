@@ -24,7 +24,7 @@ def main():
         "-s", "--server", help="Run a a headless server for DAILA", choices=["ghidra"]
     )
     parser.add_argument(
-        "-v", "--version", action="version", version=f"DAILA {dailalib.__version__}"
+        "-v", "--version", action="version", version=f"{dailalib.__version__}"
     )
     args = parser.parse_args()
 
