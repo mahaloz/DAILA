@@ -91,7 +91,9 @@ Now follow the [Ghidra Extra Steps](#ghidra-extra-steps) to enable the DAILA plu
 
 ## Supported AI Backends
 ### OpenAI (ChatGPT)
-DAILA supports the OpenAI API. To use the OpenAI API, you must have an OpenAI API key.
+DAILA supports the LiteLLM API, which in turn supports various backends like OpenAI. 
+To use a commercial LLM API, you must provide your own API key.
+As an example, to use the OpenAI API, you must have an OpenAI API key.
 If your decompiler does not have access to the `OPENAI_API_KEY` environment variable, then you must use the decompiler option from
 DAILA to set the API key.
 
