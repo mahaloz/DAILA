@@ -1,23 +1,26 @@
 __version__ = "2.4.0"
 
-from .api import AIAPI, OpenAIAPI
+from .api import AIAPI, LiteLLMAIAPI
 from libbs.api import DecompilerInterface
 
 
 def create_plugin(*args, **kwargs):
 
     #
-    # OpenAI API (ChatGPT)
+    # LLM API (through LiteLLM api)
     #
 
-    openai_api = OpenAIAPI(delay_init=True)
+    openai_api = LiteLLMAIAPI(delay_init=True)
     # create context menus for prompts
     gui_ctx_menu_actions = {
-        f"DAILA/OpenAI/{prompt_name}": (prompt.desc, getattr(openai_api, prompt_name))
+        f"DAILA/LLM/{prompt_name}": (prompt.desc, getattr(openai_api, prompt_name))
         for prompt_name, prompt in openai_api.prompts_by_name.items()
     }
     # create context menus for others
-    gui_ctx_menu_actions["DAILA/OpenAI/update_api_key"] = ("Update API Key", openai_api.ask_api_key)
+    gui_ctx_menu_actions["DAILA/LLM/update_api_key"] = ("Update API key...", openai_api.ask_api_key)
+    gui_ctx_menu_actions["DAILA/LLM/update_pmpt_style"] = ("Change prompt style...", openai_api.ask_prompt_style)
+    gui_ctx_menu_actions["DAILA/LLM/update_model"] = ("Change model...", openai_api.ask_model)
+
 
     #
     # VarModel API (local variable renaming)
@@ -32,13 +35,6 @@ def create_plugin(*args, **kwargs):
 
     gui_ctx_menu_actions["DAILA/VarBERT/varbert_rename_vars"] = ("Suggest new variable names (source-like only)", make_callback(predict_for_all_variables=False))
     gui_ctx_menu_actions["DAILA/VarBERT/varbert_rename_vars_all"] = ("Suggest new variable names (for all variables)", make_callback(predict_for_all_variables=True))
-
-    #
-    # General LLM settings
-    #
-
-    # create context menus for others
-    gui_ctx_menu_actions["DAILA/OpenAI/update_pmpt_style"] = ("Change prompt style...", openai_api.gui_update_prompt_style)
 
     #
     # Decompiler Plugin Registration

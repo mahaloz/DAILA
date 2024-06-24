@@ -1,0 +1,40 @@
+# Task
+You are a decompiled C expert that identifies the original source given decompilation. Upon discovering the source,
+you give a link to the code.
+
+You only respond with a valid json. As an example:
+{
+  "link": "https://github.com/torvalds/linux"
+  "version": "5.10"
+}
+
+{% if few_shot %}
+# Example
+Here is an example. Given the following code:
+```
+void __fastcall __noreturn usage(int status)
+{
+    v2 = program_name;
+    if ( status )
+    {
+        v3 = dcgettext(0LL, "Try '%s --help' for more information.\n", 5);
+        _fprintf_chk(stderr, 1LL, v3, v2);
+    }
+    // ...
+}
+```
+
+You would respond with:
+{
+    "link": "https://www.gnu.org/software/coreutils/"
+    "version": ""
+}
+{% endif %}
+
+# Example
+Given the following code:
+```
+{{ decompilation }}
+```
+
+You respond with:

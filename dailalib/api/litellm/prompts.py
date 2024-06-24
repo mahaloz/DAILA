@@ -2,7 +2,7 @@ import typing
 
 from libbs.artifacts import Comment
 
-from .prompt import Prompt
+from dailalib.api.litellm.prompts.prompt import Prompt
 
 if typing.TYPE_CHECKING:
     from dailalib.api import AIAPI
@@ -93,7 +93,7 @@ PROMPTS = [
         }}
 
         You responded with:
-        {{"a0: argc", "a1: argv",  "v1": "is_even"}}
+        {{"a0": "argc", "a1": "argv",  "v1": "is_even"}}
 
         Here is another example:
         {Prompt.DECOMP_TEXT}

@@ -1,10 +1,8 @@
-from typing import Dict, Optional
+from typing import Optional
 from functools import wraps
-import threading
 
 from libbs.api import DecompilerInterface
 
-from .prompt_type import PromptType
 
 class AIAPI:
     def __init__(
@@ -17,7 +15,6 @@ class AIAPI:
         min_func_size: int = 0x10,
         max_func_size: int = 0xffff,
         model=None,
-        prompt_style=PromptType.FEW_SHOT,
     ):
         # useful for initing after the creation of a decompiler interface
         self._dec_interface: DecompilerInterface = None
@@ -41,15 +38,6 @@ class AIAPI:
         self._dec_name = decompiler_name if decompiler_interface is None else decompiler_interface.name
         if self._dec_interface is None and not self._dec_name:
             raise ValueError("You must either provide a decompiler name or a decompiler interface.")
-
-    def gui_update_prompt_style(self):
-        # TODO: make this a selection
-        if self._dec_interface is not None:
-            p_style = self._dec_interface.gui_ask_for_string("Prompt Style?", title="DAILA")
-            p_style = p_style.lower()
-            if p_style not in PromptType.__members__:
-                raise ValueError(f"Invalid prompt style: {p_style}")
-
     def info(self, msg):
         if self._dec_interface is not None:
             self._dec_interface.info(msg)

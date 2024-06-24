@@ -52,12 +52,13 @@ After you've done this, you can use the context menu as shown above.
 ### Scripting
 You can use DAILA in your own scripts by importing the `dailalib` package.
 Here is an example using the OpenAI API:
+
 ```python
-from dailalib import OpenAIAPI
+from dailalib import LiteLLMAIAPI
 from libbs.api import DecompilerInterface
 
 deci = DecompilerInterface.discover()
-ai_api = OpenAIAPI(decompiler_interface=deci)
+ai_api = LiteLLMAIAPI(decompiler_interface=deci)
 for function in deci.functions:
     summary = ai_api.summarize_function(function)
 ```
