@@ -16,6 +16,7 @@ class LiteLLMAIAPI(AIAPI):
         "gpt-4o": 8_000,
         "gpt-3.5-turbo": 4_096,
         "claude-2": 200_000,
+        "gemini/gemini-pro": 12_288,
         "vertex_ai_beta/gemini-pro": 12_288,
     }
 
@@ -108,6 +109,8 @@ class LiteLLMAIAPI(AIAPI):
             return os.getenv("OPENAI_API_KEY", None)
         elif "claude" in self.model:
             return os.getenv("ANTHROPIC_API_KEY", None)
+        elif "gemini/gemini" in self.model:
+            return os.getenv("GEMINI_API_KEY", None)
         elif "vertex" in self.model:
             return self._api_key
         else:
@@ -121,6 +124,8 @@ class LiteLLMAIAPI(AIAPI):
                 os.environ["OPENAI_API_KEY"] = self._api_key
             elif "claude" in self.model:
                 os.environ["ANTHROPIC_API_KEY"] = self._api_key
+            elif "gemini/gemini" in self.model:
+                os.environ["GEMINI_API_KEY"] = self._api_key
 
     def ask_api_key(self, *args, **kwargs):
         api_key_or_path = self._dec_interface.gui_ask_for_string("Enter you AI API Key or Creds Path:", title="DAILA")

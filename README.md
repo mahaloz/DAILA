@@ -17,6 +17,7 @@ DAILA supports any LLM supported in [LiteLLM](https://github.com/BerriAI/litellm
 - ChatGPT
 - Claude
 - Llama2
+- Gemini
 - and more...
 
 DAILA also supports local models of different types, like [VarBERT](https://github.com/binsync/varbert_api), a local model for renaming variables in decompilation published in S&P 2024.
@@ -90,7 +91,7 @@ In the container, you can launch ghidra from `/tools/ghidra_10.4_PUBLIC/ghidraRu
 Now follow the [Ghidra Extra Steps](#ghidra-extra-steps) to enable the DAILA plugin and you're good to go!
 
 ## Supported AI Backends
-### OpenAI (ChatGPT)
+### LiteLLM (many backends)
 DAILA supports the LiteLLM API, which in turn supports various backends like OpenAI. 
 To use a commercial LLM API, you must provide your own API key.
 As an example, to use the OpenAI API, you must have an OpenAI API key.
