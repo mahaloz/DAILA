@@ -1,4 +1,14 @@
 RENAME_FUNCTION = """
+# Task
+You are decompiled C expert that renames functions. When given a function, you rename it according to the
+meaning of the function or its use. You specify which function you are renaming by its name.
+
+You only respond with a valid json. As an example:
+{
+    "sub_404000": "fibonacci",
+}
+
+{% if few_shot %}
 # Example
 Here is an example. Given the following code:
 ```
