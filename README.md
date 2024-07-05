@@ -28,6 +28,11 @@ Install our library backend through pip and our decompiler plugin through our in
 pip3 install dailalib && daila --install 
 ```
 
+This is the light mode. **If you want to use VarBERT, you must install the full version**:
+```bash
+pip3 install dailalib[full] && daila --install 
+```
+
 This will also download the VarBERT models for you through the [VarBERT API](https://github.com/binsync/varbert_api).
 If you happen to be installing DAILA on a machine that won't have internet access, like a secure network, you can use our Docker image in the [Docker Container](#docker-container) section.
 

@@ -21,20 +21,26 @@ def create_plugin(*args, **kwargs):
     gui_ctx_menu_actions["DAILA/LLM/update_pmpt_style"] = ("Change prompt style...", litellm_api.ask_prompt_style)
     gui_ctx_menu_actions["DAILA/LLM/update_model"] = ("Change model...", litellm_api.ask_model)
 
-
     #
     # VarModel API (local variable renaming)
     #
 
-    from varbert.api import VariableRenamingAPI
-    var_api = VariableRenamingAPI(delay_init=True)
+    VARBERT_AVAILABLE = True
+    try:
+        from varbert.api import VariableRenamingAPI
+    except ImportError:
+        VARBERT_AVAILABLE = False
 
-    # add single interface, which is to rename variables
-    def make_callback(predict_for_all_variables):
-        return lambda *args, **kwargs: var_api.query_model(**kwargs, remove_bad_names=not predict_for_all_variables)
+    var_api = None
+    if VARBERT_AVAILABLE:
+        var_api = VariableRenamingAPI(delay_init=True)
 
-    gui_ctx_menu_actions["DAILA/VarBERT/varbert_rename_vars"] = ("Suggest new variable names (source-like only)", make_callback(predict_for_all_variables=False))
-    gui_ctx_menu_actions["DAILA/VarBERT/varbert_rename_vars_all"] = ("Suggest new variable names (for all variables)", make_callback(predict_for_all_variables=True))
+        # add single interface, which is to rename variables
+        def make_callback(predict_for_all_variables):
+            return lambda *args, **kwargs: var_api.query_model(**kwargs, remove_bad_names=not predict_for_all_variables)
+
+        gui_ctx_menu_actions["DAILA/VarBERT/varbert_rename_vars"] = ("Suggest new variable names (source-like only)", make_callback(predict_for_all_variables=False))
+        gui_ctx_menu_actions["DAILA/VarBERT/varbert_rename_vars_all"] = ("Suggest new variable names (for all variables)", make_callback(predict_for_all_variables=True))
 
     #
     # Decompiler Plugin Registration
@@ -50,6 +56,9 @@ def create_plugin(*args, **kwargs):
         gui_init_args=args,
         gui_init_kwargs=kwargs
     )
+    if not VARBERT_AVAILABLE:
+        deci.info("VarBERT not installed, reinstall with `pip install dailalib[full]` to enable local models.")
+
     deci.info("DAILA backend loaded! Initializing context menus now...")
 
     litellm_api.init_decompiler_interface(decompiler_interface=deci)
