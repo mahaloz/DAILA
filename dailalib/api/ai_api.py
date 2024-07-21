@@ -95,7 +95,11 @@ class AIAPI:
 
                 # get new text with the function that is present
                 if dec_text is None:
-                    dec_text = ai_api._dec_interface.decompile(function.addr)
+                    decompilation = ai_api._dec_interface.decompile(function.addr)
+                    if decompilation is None:
+                        raise ValueError("Decompilation failed, cannot continue")
+
+                    dec_text = decompilation.text
 
             return f(*args, function=function, dec_text=dec_text, use_dec=use_dec, **kwargs)
 
