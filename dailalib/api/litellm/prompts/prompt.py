@@ -63,6 +63,7 @@ class Prompt:
             #ai_api.debug(f"Prompting with style: {self.ai_api.prompt_style}...")
             #ai_api.debug(f"Prompting with: {query_text}")
 
+            ai_api.on_query(self.name, self.ai_api.model, self.ai_api.prompt_style, function, dec_text)
             response += self.ai_api.query_model(query_text)
             default_response = {} if self._json_response else ""
             if not response:

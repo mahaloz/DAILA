@@ -141,6 +141,7 @@ class LiteLLMAIAPI(AIAPI):
         if self._dec_interface is not None:
             from .prompts import ALL_STYLES
 
+            prompt_style = self.prompt_style
             style_choices = ALL_STYLES.copy()
             style_choices.remove(self.prompt_style)
             style_choices = [self.prompt_style] + style_choices
@@ -150,8 +151,9 @@ class LiteLLMAIAPI(AIAPI):
                 style_choices,
                 title="DAILA"
             )
-            self.prompt_style = p_style
-            self._dec_interface.info(f"Prompt style set to {p_style}")
+            if p_style != prompt_style and p_style is not None:
+                self.prompt_style = p_style
+                self._dec_interface.info(f"Prompt style set to {p_style}")
 
     def ask_model(self):
         if self._dec_interface is not None:

@@ -1,5 +1,6 @@
 from typing import Optional
 from functools import wraps
+import threading
 
 from libbs.api import DecompilerInterface
 
@@ -11,6 +12,7 @@ class AIAPI:
         decompiler_name: Optional[str] = None,
         use_decompiler: bool = True,
         delay_init: bool = False,
+        query_callbacks=None,
         # size in bytes
         min_func_size: int = 0x10,
         max_func_size: int = 0xffff,
@@ -20,6 +22,7 @@ class AIAPI:
         self._dec_interface: DecompilerInterface = None
         self._dec_name = None
         self._delay_init = delay_init
+        self.query_callbacks = query_callbacks or []
         if not self._delay_init:
             self.init_decompiler_interface(decompiler_interface, decompiler_name, use_decompiler)
 
@@ -38,6 +41,7 @@ class AIAPI:
         self._dec_name = decompiler_name if decompiler_interface is None else decompiler_interface.name
         if self._dec_interface is None and not self._dec_name:
             raise ValueError("You must either provide a decompiler name or a decompiler interface.")
+
     def info(self, msg):
         if self._dec_interface is not None:
             self._dec_interface.info(msg)
@@ -91,7 +95,7 @@ class AIAPI:
 
                 # we must have a UI if we have no func
                 if function is None:
-                    function = ai_api._dec_interface.functions[ai_api._dec_interface.gui_active_context().addr]
+                    function = ai_api._dec_interface.functions[ai_api._dec_interface.gui_active_context().func_addr]
 
                 # get new text with the function that is present
                 if dec_text is None:
@@ -105,3 +109,7 @@ class AIAPI:
 
         return _requires_function
 
+    def on_query(self, query_name, model, prompt_style, function, decompilation):
+        for func in self.query_callbacks:
+            t = threading.Thread(target=func, args=(query_name, model, prompt_style, function, decompilation))
+            t.start()
