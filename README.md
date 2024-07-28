@@ -30,7 +30,7 @@ pip3 install dailalib && daila --install
 
 This is the light mode. **If you want to use VarBERT, you must install the full version**:
 ```bash
-pip3 install dailalib[full] && daila --install 
+pip3 install 'dailalib[full]' && daila --install 
 ```
 
 This will also download the VarBERT models for you through the [VarBERT API](https://github.com/binsync/varbert_api).
