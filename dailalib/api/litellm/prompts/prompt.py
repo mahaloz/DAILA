@@ -1,5 +1,4 @@
 import json
-import typing
 import re
 from typing import Optional, Union, Dict, Callable
 import textwrap
@@ -48,7 +47,7 @@ class Prompt:
             raise Exception("api must be set before querying!")
 
         @AIAPI.requires_function
-        def _query_model(ai_api=self.ai_api, function=function, dec_text=dec_text, use_dec=use_dec) -> Union[Dict, str]:
+        def _query_model(ai_api=self.ai_api, function=function, dec_text=dec_text, **_kwargs) -> Union[Dict, str]:
             if not ai_api:
                 return {}
 
