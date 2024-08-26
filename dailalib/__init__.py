@@ -1,4 +1,4 @@
-__version__ = "3.4.4"
+__version__ = "3.4.5"
 
 from .api import AIAPI, LiteLLMAIAPI
 from libbs.api import DecompilerInterface

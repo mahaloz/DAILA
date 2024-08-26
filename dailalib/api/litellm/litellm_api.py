@@ -2,7 +2,6 @@ import typing
 from typing import Optional
 import os
 
-from litellm import completion
 import tiktoken
 
 from ..ai_api import AIAPI
@@ -52,6 +51,9 @@ class LiteLLMAIAPI(AIAPI):
         model: Optional[str] = None,
         max_tokens=None,
     ):
+        # delay import because litellm attempts to query the server on import to collect cost information.
+        from litellm import completion
+
         if not self.api_key:
             raise ValueError(f"Model API key is not set. Please set it before querying the model {self.model}")
 
