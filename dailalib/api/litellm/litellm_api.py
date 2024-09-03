@@ -20,12 +20,20 @@ class LiteLLMAIAPI(AIAPI):
     }
 
     # replacement strings for API calls
-    def __init__(self, api_key: Optional[str] = None, model: str = DEFAULT_MODEL, prompts: Optional[list] = None, **kwargs):
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        model: str = DEFAULT_MODEL,
+        prompts: Optional[list] = None,
+        fit_to_tokens: bool = True,
+        **kwargs
+    ):
         super().__init__(**kwargs)
         self._api_key = None
         # default to openai api key if not provided
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
         self.model = model
+        self.fit_to_tokens = fit_to_tokens
 
         # delay prompt import
         from .prompts import PROMPTS, DEFAULT_STYLE

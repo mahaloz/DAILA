@@ -40,7 +40,7 @@ class Prompt:
         self._response_key = response_key
         self._gui_result_callback = gui_result_callback
         self.desc = desc or name
-        self.ai_api: "LiteLLMAIAPI" = ai_api
+        self.ai_api: LiteLLMAIAPI = ai_api
 
     def query_model(self, *args, function=None, dec_text=None, use_dec=True, **kwargs):
         if self.ai_api is None:
@@ -55,7 +55,7 @@ class Prompt:
             response = self._pretext_response if self._pretext_response and not self._json_response else ""
             # grab decompilation and replace it in the prompt, make sure to fix the decompilation for token max
             query_text = self.template.render(
-                decompilation=LiteLLMAIAPI.fit_decompilation_to_token_max(dec_text),
+                decompilation=LiteLLMAIAPI.fit_decompilation_to_token_max(dec_text) if self.ai_api.fit_to_tokens else dec_text,
                 few_shot=bool(self.ai_api.prompt_style == PromptType.FEW_SHOT),
             )
             #ai_api.debug(f"Prompting using model: {self.ai_api.model}...")
