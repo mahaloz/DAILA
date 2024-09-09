@@ -22,13 +22,20 @@ if sys.version[0] == "2":
     import subprocess
     from libbs_vendored.ghidra_bridge_server import GhidraBridgeServer
     from distutils.spawn import find_executable
-    cmd = shell_library_command.split(" ") if shell_library_command else python_library_command.split(" ")
+    cmd = shell_library_command.split(" ")
     if not find_executable(cmd[0]):
-        # fallback to doing a python command
-        cmd = python_library_command.split(" ")
-
+        # fallback to doing python style module call 
+        python_end = ["-m"] + python_library_command.split(" ")
+        python_exec = "python" if find_executable("python") else "python3"
+        cmd = [python_exec] + python_end
+    
     GhidraBridgeServer.run_server(background=True)
-    process = subprocess.Popen(cmd)
+    print("[+] Starting the backend now...")
+    try:
+        process = subprocess.Popen(cmd)
+    except Exception as e:
+        print("[!] Failed to run the backend command", cmd, "because", e)
+
     if process.poll() is not None:
         raise RuntimeError(
             "Failed to run the Python3 backed. It's likely Python3 is not in your Path inside Ghidra.")
