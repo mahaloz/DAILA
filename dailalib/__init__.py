@@ -1,4 +1,4 @@
-__version__ = "3.5.0"
+__version__ = "3.6.0"
 
 from .api import AIAPI, LiteLLMAIAPI
 from libbs.api import DecompilerInterface
@@ -13,7 +13,7 @@ def create_plugin(*args, **kwargs):
     litellm_api = LiteLLMAIAPI(delay_init=True)
     # create context menus for prompts
     gui_ctx_menu_actions = {
-        f"DAILA/LLM/{prompt_name}": (prompt.desc, getattr(litellm_api, prompt_name))
+        f"DAILA/LLM/{prompt_name}": (prompt.desc, lambda *x, **y: getattr(litellm_api, prompt_name)(*x, **y))
         for prompt_name, prompt in litellm_api.prompts_by_name.items()
     }
     # create context menus for others
@@ -27,12 +27,13 @@ def create_plugin(*args, **kwargs):
 
     VARBERT_AVAILABLE = True
     try:
-        from varbert.api import VariableRenamingAPI
+        import varbert
     except ImportError:
         VARBERT_AVAILABLE = False
 
     var_api = None
     if VARBERT_AVAILABLE:
+        from varbert.api import VariableRenamingAPI
         var_api = VariableRenamingAPI(delay_init=True)
 
         # add single interface, which is to rename variables

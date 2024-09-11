@@ -10,7 +10,7 @@ from .prompt_type import PromptType
 from libbs.artifacts import Comment
 from jinja2 import Template, StrictUndefined
 
-JSON_REGEX = re.compile(r"\{.*}", flags=re.DOTALL)
+JSON_REGEX = re.compile(r"\{.*?}", flags=re.DOTALL)
 
 
 class Prompt:
@@ -22,7 +22,7 @@ class Prompt:
     def __init__(
         self,
         name: str,
-        template_text: str,
+        template_name: str,
         desc: str = None,
         pretext_response: Optional[str] = None,
         posttext_response: Optional[str] = None,
@@ -33,7 +33,8 @@ class Prompt:
         gui_result_callback: Optional[Callable] = None
     ):
         self.name = name
-        self.template = Template(textwrap.dedent(template_text), undefined=StrictUndefined)
+        self.template_name = template_name
+        self.last_rendered_template = None
         self._pretext_response = pretext_response
         self._posttext_response = posttext_response
         self._json_response = json_response
@@ -41,6 +42,11 @@ class Prompt:
         self._gui_result_callback = gui_result_callback
         self.desc = desc or name
         self.ai_api: LiteLLMAIAPI = ai_api
+
+    def _load_template(self, prompt_style: PromptType) -> Template:
+        from . import get_prompt_template
+        template_text = get_prompt_template(self.template_name, prompt_style)
+        return Template(textwrap.dedent(template_text), undefined=StrictUndefined)
 
     def query_model(self, *args, function=None, dec_text=None, use_dec=True, **kwargs):
         if self.ai_api is None:
@@ -53,17 +59,20 @@ class Prompt:
 
             ai_api.info(f"Querying {self.name} prompt with function {function}...")
             response = self._pretext_response if self._pretext_response and not self._json_response else ""
+            template = self._load_template(self.ai_api.prompt_style)
             # grab decompilation and replace it in the prompt, make sure to fix the decompilation for token max
-            query_text = self.template.render(
+            query_text = template.render(
                 decompilation=LiteLLMAIAPI.fit_decompilation_to_token_max(dec_text) if self.ai_api.fit_to_tokens else dec_text,
                 few_shot=bool(self.ai_api.prompt_style == PromptType.FEW_SHOT),
             )
-            #ai_api.debug(f"Prompting using model: {self.ai_api.model}...")
-            #ai_api.debug(f"Prompting with style: {self.ai_api.prompt_style}...")
-            #ai_api.debug(f"Prompting with: {query_text}")
+            self.last_rendered_template = query_text
+            #ai_api.info(f"Prompting using model: {self.ai_api.model}...")
+            #ai_api.info(f"Prompting with style: {self.ai_api.prompt_style}...")
+            #ai_api.info(f"Prompting with: {query_text}")
 
             ai_api.on_query(self.name, self.ai_api.model, self.ai_api.prompt_style, function, dec_text)
             response += self.ai_api.query_model(query_text)
+            #ai_api.info(f"Response received from AI: {response}")
             default_response = {} if self._json_response else ""
             if not response:
                 return default_response
@@ -78,7 +87,7 @@ class Prompt:
                 if not json_matches:
                     return default_response
 
-                json_data = json_matches[0]
+                json_data = json_matches[-1]
                 try:
                     response = json.loads(json_data)
                 except Exception:
