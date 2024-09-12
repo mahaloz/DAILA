@@ -147,7 +147,7 @@ class LiteLLMAIAPI(AIAPI):
             api_key = api_key_or_path
         self.api_key = api_key
 
-    def ask_prompt_style(self):
+    def ask_prompt_style(self, *args, **kwargs):
         if self._dec_interface is not None:
             from .prompts import ALL_STYLES
 
@@ -165,7 +165,7 @@ class LiteLLMAIAPI(AIAPI):
                 self.prompt_style = p_style
                 self._dec_interface.info(f"Prompt style set to {p_style}")
 
-    def ask_model(self):
+    def ask_model(self, *args, **kwargs):
         if self._dec_interface is not None:
             model_choices = list(LiteLLMAIAPI.MODEL_TO_TOKENS.keys())
             model_choices.remove(self.model)

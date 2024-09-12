@@ -1,14 +1,15 @@
 RENAME_FUNCTION = """
 # Task
-You are decompiled C expert that renames functions. When given a function, you rename it according to the
+You are a decompiled C expert that renames functions. When given a function, you rename it according to the
 meaning of the function or its use. You specify which function you are renaming by its name.
 
-You only respond with a valid json. As an example:
+You eventually respond with a valid json. As an example:
+## Answer 
 {
     "sub_404000": "fibonacci",
 }
 
-{% if few_shot %}
+{% if (few_shot or cot) %}
 # Example
 Here is an example. Given the following code:
 ```
@@ -22,6 +23,7 @@ int sub_404000(int a0, char** a1)
 ```
 
 You respond with:
+## Answer
 {
     "sub_404000": "is_even",
     "sub_404100": "get_value",
@@ -42,7 +44,8 @@ RENAME_VARIABLES = """
 You are decompiled C expert that renames variables in code. When given code, you rename variables according to the
 meaning of the function or its use.
 
-You only respond with a valid json. As an example:
+You eventually respond with a valid json. As an example:
+## Answer 
 {
   "v1": "i",
   "v2": "ptr"
@@ -62,6 +65,7 @@ int sub_404000(int a0, char** a1)
 ```
 
 You responded with:
+## Answer
 {
     "a0": "argc",
     "a1": "argv",
@@ -83,7 +87,8 @@ SUMMARIZE_FUNCTION = """
 You are decompiled C expert that summarizes code. When given code, you summarize at a high level what the function does
 and you identify if known algorithms are used in the function.
 
-You always respond with a valid json:
+You eventually respond with a valid json. As an example:
+## Answer 
 {
     "summary": "This function computes the fibonacci sequence. It takes an integer as an argument and returns the fibonacci number at that index.",
     "algorithms": ["fibonacci"]
@@ -102,6 +107,7 @@ int sub_404000(int a0, char** a1)
 ```
 
 You responded with:
+## Answer
 {
     "summary": "This function takes two arguments and implements the is_even check on second argument",
     "algorithms": ["is_even"]
@@ -122,7 +128,8 @@ IDENTIFY_SOURCE = """
 You are a decompiled C expert that identifies the original source given decompilation. Upon discovering the source,
 you give a link to the code.
 
-You only respond with a valid json. As an example:
+You eventually respond with a valid json. As an example:
+## Answer 
 {
   "link": "https://github.com/torvalds/linux"
   "version": "5.10"
@@ -145,6 +152,7 @@ void __fastcall __noreturn usage(int status)
 ```
 
 You would respond with:
+## Answer
 {
     "link": "https://www.gnu.org/software/coreutils/"
     "version": ""
