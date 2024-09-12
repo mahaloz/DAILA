@@ -7,7 +7,7 @@ from ...ai_api import AIAPI
 from ..litellm_api import LiteLLMAIAPI
 from .prompt_type import PromptType
 
-from libbs.artifacts import Comment
+from libbs.artifacts import Comment, Function, StackVariable
 from jinja2 import Template, StrictUndefined
 
 JSON_REGEX = re.compile(r"\{.*?}", flags=re.DOTALL)
@@ -116,14 +116,29 @@ class Prompt:
 
     @staticmethod
     def rename_function(result, function, ai_api: "AIAPI"):
-        new_name = list(result.values())[0]
-        function.name = new_name
-        ai_api._dec_interface.functions[function.addr] = function
+        if function.name in result:
+            new_name = result[function.name]
+        else:
+            new_name = list(result.values())[0]
+
+        new_func = Function(name=new_name, addr=function.addr)
+        ai_api._dec_interface.functions[function.addr] = new_func
 
     @staticmethod
     def rename_variables(result, function, ai_api: "AIAPI"):
+        new_func: Function = function.copy()
+        # clear out changes that are not for variables
+        new_func.name = None
+        new_func.type = None
         ai_api._dec_interface.rename_local_variables_by_names(function, result)
 
     @staticmethod
     def comment_function(result, function, ai_api: "AIAPI"):
-        ai_api._dec_interface.comments[function.addr] = Comment(function.addr, comment=result, func_addr=function.addr)
+        curr_cmt_obj = ai_api._dec_interface.comments.get(function.addr, None)
+        curr_cmt = curr_cmt_obj.comment + "\n" if curr_cmt_obj is not None else ""
+
+        ai_api._dec_interface.comments[function.addr] = Comment(
+            addr=function.addr,
+            comment=curr_cmt + result,
+            func_addr=function.addr
+        )

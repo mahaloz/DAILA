@@ -115,20 +115,15 @@ Given the following code:
 You respond with:
 """
 
-# TODO: finish me
-RENAME_VARIABLES = """
-# Task
-You are decompiled C expert that renames variables in code. When given code, you rename variables according to the
-meaning of the function or its use.
-
-You eventually respond with a valid json. As an example:
-## Answer 
-{
-  "v1": "i",
-  "v2": "ptr"
-}
-
-{% if few_shot %}
+RENAME_VARIABLES = f"""
+{COT_PREAMBLE}
+All experts will be asked to rename the variables in some decompiled C code.
+{COT_MIDAMBLE}
+The question is how to rename the variables given all the information we got.
+Note that the variable name must be descriptive of the variables's purpose and include known algorithms if known.
+Use how the variable is used in the function to determine the new name.
+{COT_POSTAMBLE}
+""" + """
 # Example
 Here is an example. Given the following code:
 ```
@@ -142,13 +137,61 @@ int sub_404000(int a0, char** a1)
 ```
 
 You responded with:
+## Reasoning
+### Expert 1: C Programming Expert
+
+#### Assessment
+The function appears to be using the first element of the a0 parameter (likely a pointer or array) to call another 
+function sub_404100. It then checks if the result is even by taking modulo 2. The purpose of a0 seems similar to 
+the argc parameter in a typical main function, representing the count of elements (arguments). a1 is accessed like an 
+array of strings, typical for command line arguments (argv). v1 checks the result of a function call against an even 
+condition, making it an "is even" type check.
+
+#### Renaming
+a0 -> argc (argument count)
+a1 -> argv (argument values)
+v1 -> is_even (checks if the result is even)
+
+#### Reasoning
+Based on the common C patterns and usage of argc/argv in argument parsing, the names align with conventional usage.
+
+
+### Expert 2: Reverse Engineering Expert
+#### Assessment
+From reverse engineering perspectives, the use of a0 and a1 in the function closely mimics command-line argument 
+handling, typically seen in programs parsing inputs. The function sub_404100's output is then tested for evenness, 
+suggesting a validation or filtering step on input data.
+
+#### Renaming
+a0 -> argc
+a1 -> argv
+v1 -> is_even
+
+#### Reasoning
+The pattern fits well-known command-line input processing. The use of modulo operation suggests a straightforward 
+validation function.
+
+
+### Expert 3: Cybersecurity Analyst
+#### Assessment
+This function checks if a value derived from a set of arguments is even. This check is common in validation routines, 
+especially where inputs might affect program flow or data integrity.
+
+#### Renaming:
+a0 -> argc (argument count, a potential source of external input)
+a1 -> argv (argument values, standard for parsing command line arguments)
+v1 -> is_even (indicative of a validation flag)
+
+#### Reasoning
+The context aligns with common input validation scenarios in programs handling external inputs, ensuring values conform 
+to expected formats (in this case, even numbers).
+
 ## Answer
 {
     "a0": "argc",
     "a1": "argv",
     "v1": "is_even"
 }
-{% endif %}
 
 # Example
 Given the following code:
@@ -159,20 +202,15 @@ Given the following code:
 You respond with:
 """
 
-# TODO: finish me
-SUMMARIZE_FUNCTION = """
-# Task
-You are decompiled C expert that summarizes code. When given code, you summarize at a high level what the function does
-and you identify if known algorithms are used in the function.
-
-You eventually respond with a valid json. As an example:
-## Answer 
-{
-    "summary": "This function computes the fibonacci sequence. It takes an integer as an argument and returns the fibonacci number at that index.",
-    "algorithms": ["fibonacci"]
-}
-
-{% if few_shot %}
+SUMMARIZE_FUNCTION = f"""
+{COT_PREAMBLE}
+All experts will be asked to summarizes the code. When given code, they summarize at a high level what the function does
+and identify if known algorithms are used in the function.
+{COT_MIDAMBLE}
+The question is how to summarize the function given all the information we got.
+Note that the summary must be descriptive of the function's purpose and include known algorithms if known.
+{COT_POSTAMBLE}
+""" + """
 # Example
 Here is an example. Given the following code:
 ```
@@ -185,12 +223,29 @@ int sub_404000(int a0, char** a1)
 ```
 
 You responded with:
+## Reasoning
+### Expert 1: C Programming Expert
+This function, named `sub_404000`, accepts two parameters: an integer `a0` and an array of strings `a1` (char**). 
+The function seems to call another function `sub_404100` with the value at `a0[1]`. The return value of this call is 
+then checked to see if it's even (`% 2 == 0`). The result of this evaluation (true or false) is assigned to `v1` and 
+returned.
+
+### Expert 2: Reverse Engineering Expert
+On a high level, the function `sub_404000` performs an operation using another function, `sub_404100`. It evaluates 
+whether the result of the `sub_404100` function, called with the second element of an integer array, is even. This 
+functionality can be identified as an "even-check" operation. From the look of it, this might correspond to checking 
+for a specific condition or behavior related to even numbers.
+
+### Expert 3: Cybersecurity Analyst
+The function `sub_404000` appears to be analyzing the nature of the provided input array. By using the result of 
+`sub_404100` and evaluating if it is even, it is likely implementing some control mechanism or check that might be 
+important in securing an environment, ensuring certain conditions hold before proceeding.
+
 ## Answer
 {
     "summary": "This function takes two arguments and implements the is_even check on second argument",
     "algorithms": ["is_even"]
 }
-{% endif %}
 
 # Example
 Given the following code:
@@ -201,20 +256,16 @@ Given the following code:
 You respond with:
 """
 
-# TODO: finish me
-IDENTIFY_SOURCE = """
-# Task
-You are a decompiled C expert that identifies the original source given decompilation. Upon discovering the source,
-you give a link to the code.
-
-You eventually respond with a valid json. As an example:
-## Answer 
-{
-  "link": "https://github.com/torvalds/linux"
-  "version": "5.10"
-}
-
-{% if few_shot %}
+IDENTIFY_SOURCE = f"""
+{COT_PREAMBLE}
+All experts will be asked to identify the original source of the code given a decompilation.
+Upon discovering the source, you give a link to the code.
+{COT_MIDAMBLE}
+Note that the source must be a well-known library or program.
+If you do not know the source, of if you are not very confident, please do not guess. 
+Provide an empy JSON.
+{COT_POSTAMBLE}
+""" + """
 # Example
 Here is an example. Given the following code:
 ```
@@ -231,12 +282,24 @@ void __fastcall __noreturn usage(int status)
 ```
 
 You would respond with:
+## Reasoning
+### Expert 1: C Programming Expert
+Given the use of `dcgettext` and `_fprintf_chk`, the function is most likely part of a widely-used GNU program. 
+Considering the prevalence and usage context, this function potentially belongs to the GNU Core Utilities package.
+
+### Expert 2: Reverse Engineering Expert
+Given further consideration of function names and the general pattern of program design, the program aligns closely 
+with GNU Core Utilities, specifically in functionalities related to user guidance and error display.
+
+### Expert 3: Cybersecurity Analyst
+Reevaluating the function in the context of command-line tools, the best match is indeed a core utility such as those 
+found in the GNU Core Utilities package.
+
 ## Answer
 {
     "link": "https://www.gnu.org/software/coreutils/"
     "version": ""
 }
-{% endif %}
 
 # Example
 Given the following code:
