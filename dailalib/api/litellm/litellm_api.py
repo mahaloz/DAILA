@@ -9,7 +9,11 @@ from ..ai_api import AIAPI
 class LiteLLMAIAPI(AIAPI):
     prompts_by_name = []
     DEFAULT_MODEL = "gpt-4o"
+    OPENAI_MODELS = {"gpt-4", "gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo", "o1-mini", "o1-preview"}
     MODEL_TO_TOKENS = {
+        # TODO: update the token values for o1
+        "o1-mini": 8_000,
+        "o1-preview": 8_000,
         "gpt-4-turbo": 128_000,
         "gpt-4": 8_000,
         "gpt-4o": 8_000,
@@ -115,7 +119,7 @@ class LiteLLMAIAPI(AIAPI):
     def api_key(self):
         if not self._api_key:
             return None
-        elif "gpt" in self.model:
+        elif self.model in self.OPENAI_MODELS:
             return os.getenv("OPENAI_API_KEY", None)
         elif "claude" in self.model:
             return os.getenv("ANTHROPIC_API_KEY", None)
@@ -130,7 +134,7 @@ class LiteLLMAIAPI(AIAPI):
     def api_key(self, value):
         self._api_key = value
         if self._api_key:
-            if "gpt" in self.model:
+            if self.model in self.OPENAI_MODELS:
                 os.environ["OPENAI_API_KEY"] = self._api_key
             elif "claude" in self.model:
                 os.environ["ANTHROPIC_API_KEY"] = self._api_key
