@@ -29,7 +29,7 @@ class LiteLLMAIAPI(AIAPI):
         api_key: Optional[str] = None,
         model: str = DEFAULT_MODEL,
         prompts: Optional[list] = None,
-        fit_to_tokens: bool = True,
+        fit_to_tokens: bool = False,
         **kwargs
     ):
         super().__init__(**kwargs)
@@ -165,7 +165,11 @@ class LiteLLMAIAPI(AIAPI):
                 style_choices,
                 title="DAILA"
             )
-            if p_style != prompt_style and p_style is not None:
+            if p_style != prompt_style and p_style:
+                if p_style not in ALL_STYLES:
+                    self._dec_interface.error(f"Prompt style {p_style} is not supported.")
+                    return
+
                 self.prompt_style = p_style
                 self._dec_interface.info(f"Prompt style set to {p_style}")
 

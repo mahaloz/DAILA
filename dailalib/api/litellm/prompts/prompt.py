@@ -75,6 +75,7 @@ class Prompt:
             #ai_api.info(f"Response received from AI: {response}")
             default_response = {} if self._json_response else ""
             if not response:
+                ai_api.warning(f"Response received from AI was empty! AI failed to answer.")
                 return default_response
 
             # changes response type to a dict
