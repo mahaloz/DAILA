@@ -108,6 +108,8 @@ Currently, DAILA supports the following prompts:
 - Rename variables
 - Rename function
 - Identify the source of a function
+- Find potential vulnerabilities in a function
+- Summarize the man page of a library call
 
 ### VarBERT
 VarBERT is a local BERT model from the S&P 2024 paper [""Len or index or count, anything but v1": Predicting Variable Names in Decompilation Output with Transfer Learning"]().
