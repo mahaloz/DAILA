@@ -80,6 +80,8 @@ class AIAPI:
             dec_text = kwargs.pop("dec_text", None)
             use_dec = kwargs.pop("use_dec", True)
             has_self = kwargs.pop("has_self", True)
+            number_lines = kwargs.pop("number_lines", False)
+            context = kwargs.pop("context", None)
             # make the self object the new AI API, should only be used inside an AIAPI class
             if not ai_api and has_self:
                 ai_api = args[0]
@@ -95,7 +97,9 @@ class AIAPI:
 
                 # we must have a UI if we have no func
                 if function is None:
-                    function = ai_api._dec_interface.functions[ai_api._dec_interface.gui_active_context().func_addr]
+                    if context is None:
+                        context = ai_api._dec_interface.gui_active_context()
+                    function = ai_api._dec_interface.functions[context.func_addr]
 
                 # get new text with the function that is present
                 if dec_text is None:
@@ -104,6 +108,11 @@ class AIAPI:
                         raise ValueError("Decompilation failed, cannot continue")
 
                     dec_text = decompilation.text
+
+                if number_lines:
+                    # put a number in front of each line
+                    dec_lines = dec_text.split("\n")
+                    dec_text = "\n".join([f"{i + 1} {line}" for i, line in enumerate(dec_lines)])
 
             return f(*args, function=function, dec_text=dec_text, use_dec=use_dec, **kwargs)
 

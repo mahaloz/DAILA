@@ -1,4 +1,4 @@
-__version__ = "3.7.1"
+__version__ = "3.8.0"
 
 from .api import AIAPI, LiteLLMAIAPI
 from libbs.api import DecompilerInterface
@@ -13,10 +13,9 @@ def create_plugin(*args, **kwargs):
     litellm_api = LiteLLMAIAPI(delay_init=True)
     # create context menus for prompts
     gui_ctx_menu_actions = {
-        f"DAILA/LLM/{prompt_name}": (prompt.desc, lambda *x, **y: getattr(litellm_api, prompt_name)(*x, **y))
+        f"DAILA/LLM/{prompt_name}": (prompt.desc, getattr(litellm_api, prompt_name))
         for prompt_name, prompt in litellm_api.prompts_by_name.items()
     }
-    # create context menus for others
     gui_ctx_menu_actions["DAILA/LLM/update_api_key"] = ("Update API key...", litellm_api.ask_api_key)
     gui_ctx_menu_actions["DAILA/LLM/update_pmpt_style"] = ("Change prompt style...", litellm_api.ask_prompt_style)
     gui_ctx_menu_actions["DAILA/LLM/update_model"] = ("Change model...", litellm_api.ask_model)
