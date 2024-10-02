@@ -1,10 +1,12 @@
-__version__ = "3.8.2"
+__version__ = "3.9.0"
 
 from .api import AIAPI, LiteLLMAIAPI
-from libbs.api import DecompilerInterface
+
+from dailalib.llm_chat import get_llm_chat_creator
 
 
 def create_plugin(*args, **kwargs):
+    from libbs.api import DecompilerInterface
 
     #
     # LLM API (through LiteLLM api)
@@ -16,6 +18,9 @@ def create_plugin(*args, **kwargs):
         f"DAILA/LLM/{prompt_name}": (prompt.desc, getattr(litellm_api, prompt_name))
         for prompt_name, prompt in litellm_api.prompts_by_name.items()
     }
+    # create context menu for llm chat
+    gui_ctx_menu_actions["DAILA/LLM/chat"] = ("Open LLM Chat...", get_llm_chat_creator(litellm_api))
+
     # create context menus for others
     gui_ctx_menu_actions["DAILA/LLM/Settings/update_api_key"] = ("Update API key...", litellm_api.ask_api_key)
     gui_ctx_menu_actions["DAILA/LLM/Settings/update_pmpt_style"] = ("Change prompt style...", litellm_api.ask_prompt_style)

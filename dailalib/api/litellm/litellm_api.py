@@ -1,10 +1,10 @@
-import typing
 from typing import Optional
 import os
 
 import tiktoken
 
 from ..ai_api import AIAPI
+
 
 class LiteLLMAIAPI(AIAPI):
     prompts_by_name = []
@@ -30,6 +30,7 @@ class LiteLLMAIAPI(AIAPI):
         model: str = DEFAULT_MODEL,
         prompts: Optional[list] = None,
         fit_to_tokens: bool = False,
+        chat_use_ctx: bool = True,
         **kwargs
     ):
         super().__init__(**kwargs)
@@ -38,6 +39,7 @@ class LiteLLMAIAPI(AIAPI):
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
         self.model = model
         self.fit_to_tokens = fit_to_tokens
+        self.chat_use_ctx = chat_use_ctx
 
         # delay prompt import
         from .prompts import PROMPTS, DEFAULT_STYLE

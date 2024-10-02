@@ -8,8 +8,8 @@ DAILA was featured in the keynote talk at [HITCON CMT 2023](https://youtu.be/Hbr
 ## Supported Decompilers and AI Systems
 DAILA interacts with the decompiler abstractly through the [LibBS](https://github.com/binsync/libbs) library.
 This allows DAILA to support the following decompilers:
-- IDA Pro: **>= 7.3**
-- Ghidra: **>= 10.1**
+- IDA Pro: **>= 8.4**
+- Ghidra: **>= 11.1**
 - Binary Ninja: **>= 2.4**
 - angr-management: **>= 9.0**
 
@@ -110,6 +110,7 @@ Currently, DAILA supports the following prompts:
 - Identify the source of a function
 - Find potential vulnerabilities in a function
 - Summarize the man page of a library call
+- Free prompting... just type in your own prompt!
 
 ### VarBERT
 VarBERT is a local BERT model from the S&P 2024 paper [""Len or index or count, anything but v1": Predicting Variable Names in Decompilation Output with Transfer Learning"]().
