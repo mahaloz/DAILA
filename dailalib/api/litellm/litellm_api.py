@@ -31,6 +31,7 @@ class LiteLLMAIAPI(AIAPI):
         prompts: Optional[list] = None,
         fit_to_tokens: bool = False,
         chat_use_ctx: bool = True,
+        chat_event_callbacks: Optional[dict] = None,
         **kwargs
     ):
         super().__init__(**kwargs)
@@ -40,6 +41,7 @@ class LiteLLMAIAPI(AIAPI):
         self.model = model
         self.fit_to_tokens = fit_to_tokens
         self.chat_use_ctx = chat_use_ctx
+        self.chat_event_callbacks = chat_event_callbacks or {"send": None, "receive": None}
 
         # delay prompt import
         from .prompts import PROMPTS, DEFAULT_STYLE

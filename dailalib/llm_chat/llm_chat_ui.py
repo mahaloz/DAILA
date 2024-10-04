@@ -68,7 +68,6 @@ class LLMChatClient(QWidget):
         # create a context for this first message
         if ai_api.chat_use_ctx:
             ai_api.info("Collecting context for the current function...")
-            #import remote_pdb; remote_pdb.RemotePdb('localhost', 4444).set_trace()
             if context is None:
                 context = ai_api._dec_interface.gui_active_context()
             dec = ai_api._dec_interface.decompile(context.func_addr)
@@ -124,6 +123,12 @@ class LLMChatClient(QWidget):
         if not user_text:
             return
 
+        # do aiapi calback
+        if self.ai_api:
+            send_callback = self.ai_api.chat_event_callbacks.get("send", None)
+            if send_callback:
+                send_callback(user_text)
+
         # Display user message
         if add_text:
             self.add_message(user_text, is_user=True)
@@ -144,6 +149,12 @@ class LLMChatClient(QWidget):
     def receive_message(self, assistant_message):
         # Display assistant message
         self.add_message(assistant_message, is_user=False)
+
+        # do aiapi calback
+        if self.ai_api:
+            recv_callback = self.ai_api.chat_event_callbacks.get("receive", None)
+            if recv_callback:
+                recv_callback(assistant_message)
 
         # Append to chat history
         self.chat_history.append({"role": "user", "content": assistant_message})
