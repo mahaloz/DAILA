@@ -69,13 +69,16 @@ class Prompt:
             template = self._load_template(self.ai_api.prompt_style)
 
             # grab decompilation and replace it in the prompt, make sure to fix the decompilation for token max
-            dec_lines = dec_text.split("\n")
+            line_text = ""
+            if context and context.line_number is not None:
+                line_text = dec_text.split("\n")[context.line_number]
+
             query_text = template.render(
                 # decompilation lines of the target function
                 decompilation=LiteLLMAIAPI.fit_decompilation_to_token_max(dec_text)
                 if self.ai_api.fit_to_tokens else dec_text,
                 # line text for emphasis
-                line_text=dec_lines[context.line_number] if context.line_number is not None else "",
+                line_text=line_text,
                 # prompting style (engineering technique)
                 few_shot=bool(self.ai_api.prompt_style == PromptType.FEW_SHOT),
             )
