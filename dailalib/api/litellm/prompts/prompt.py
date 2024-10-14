@@ -155,9 +155,9 @@ class Prompt:
         ai_api._dec_interface.rename_local_variables_by_names(function, result)
 
     @staticmethod
-    def comment_function(result, function, ai_api: "AIAPI", **kwargs):
+    def comment_function(result, function: Function, ai_api: "AIAPI", **kwargs):
         curr_cmt_obj = ai_api._dec_interface.comments.get(function.addr, None)
-        curr_cmt = curr_cmt_obj.comment + "\n" if curr_cmt_obj is not None else ""
+        curr_cmt = curr_cmt_obj.comment + "\n\n" if curr_cmt_obj is not None else ""
 
         ai_api._dec_interface.comments[function.addr] = Comment(
             addr=function.addr,
@@ -200,11 +200,7 @@ class Prompt:
             new_num = str(_n + bs_cmt_lines - 2)
             rendered = rendered.replace(num, new_num)
 
-        ai_api._dec_interface.comments[function.addr] = Comment(
-            addr=function.addr,
-            comment=rendered,
-            func_addr=function.addr
-        )
+        Prompt.comment_function(rendered, function, ai_api)
 
     @staticmethod
     def comment_man_page(result, function, ai_api: "AIAPI", context=None, **kwargs):
@@ -221,9 +217,11 @@ class Prompt:
             rendered = str(result)
 
         addr = context.addr if isinstance(context, Context) and context.addr is not None else function.addr
+        curr_cmt_obj = ai_api._dec_interface.comments.get(addr, None)
+        curr_cmt = curr_cmt_obj.comment + "\n" if curr_cmt_obj is not None else ""
         ai_api._dec_interface.comments[addr] = Comment(
             addr=addr,
-            comment=rendered,
+            comment=curr_cmt + rendered,
             func_addr=function.addr,
             decompiled=True
         )
