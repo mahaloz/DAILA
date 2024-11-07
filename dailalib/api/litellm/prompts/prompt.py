@@ -83,9 +83,7 @@ class Prompt:
                 few_shot=bool(self.ai_api.prompt_style == PromptType.FEW_SHOT),
             )
             self.last_rendered_template = query_text
-            #ai_api.info(f"Prompting using model: {self.ai_api.model}...")
-            #ai_api.info(f"Prompting with style: {self.ai_api.prompt_style}...")
-            #ai_api.info(f"Prompting with: {query_text}")
+            ai_api.info(f"Prompting using: model={self.ai_api.model} and style={self.ai_api.prompt_style}")
 
             ai_api.on_query(self.name, self.ai_api.model, self.ai_api.prompt_style, function, dec_text)
             response += self.ai_api.query_model(query_text)
