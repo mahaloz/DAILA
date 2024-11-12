@@ -1,4 +1,4 @@
-__version__ = "3.10.3"
+__version__ = "3.10.4"
 
 import os
 # stop LiteLLM from querying at all to the remote server
