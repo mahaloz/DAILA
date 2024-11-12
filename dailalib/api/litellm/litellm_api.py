@@ -5,6 +5,9 @@ import tiktoken
 
 from ..ai_api import AIAPI
 
+active_model = None
+active_prompt_style = None
+
 
 class LiteLLMAIAPI(AIAPI):
     prompts_by_name = []
@@ -14,11 +17,10 @@ class LiteLLMAIAPI(AIAPI):
         # TODO: update the token values for o1
         "o1-mini": 8_000,
         "o1-preview": 8_000,
-        "gpt-4-turbo": 128_000,
-        "gpt-4": 8_000,
         "gpt-4o": 8_000,
-        "gpt-3.5-turbo": 4_096,
-        "claude-2": 200_000,
+        "gpt-4o-mini": 16_000,
+        "gpt-4-turbo": 128_000,
+        "claude-3-5-sonnet-20240620": 200_000,
         "gemini/gemini-pro": 12_288,
         "vertex_ai_beta/gemini-pro": 12_288,
     }
@@ -48,6 +50,11 @@ class LiteLLMAIAPI(AIAPI):
         self.prompt_style = DEFAULT_STYLE
         prompts = prompts + PROMPTS if prompts else PROMPTS
         self.prompts_by_name = {p.name: p for p in prompts}
+
+        # update the globals (for threading hacks)
+        global active_model, active_prompt_style
+        active_model = self.model
+        active_prompt_style = self.prompt_style
 
     def __dir__(self):
         return list(super().__dir__()) + list(self.prompts_by_name.keys())
@@ -161,8 +168,9 @@ class LiteLLMAIAPI(AIAPI):
 
             prompt_style = self.prompt_style
             style_choices = ALL_STYLES.copy()
-            style_choices.remove(self.prompt_style)
-            style_choices = [self.prompt_style] + style_choices
+            if self.prompt_style:
+                style_choices.remove(self.prompt_style)
+                style_choices = [self.prompt_style] + style_choices
 
             p_style = self._dec_interface.gui_ask_for_choice(
                 "What prompting style would you like to use?",
@@ -177,11 +185,16 @@ class LiteLLMAIAPI(AIAPI):
                 self.prompt_style = p_style
                 self._dec_interface.info(f"Prompt style set to {p_style}")
 
+                # update global
+                global active_prompt_style
+                active_prompt_style = p_style
+
     def ask_model(self, *args, **kwargs):
         if self._dec_interface is not None:
             model_choices = list(LiteLLMAIAPI.MODEL_TO_TOKENS.keys())
-            model_choices.remove(self.model)
-            model_choices = [self.model] + model_choices
+            if self.model:
+                model_choices.remove(self.model)
+                model_choices = [self.model] + model_choices
 
             model = self._dec_interface.gui_ask_for_choice(
                 "What LLM model would you like to use?",
@@ -190,3 +203,7 @@ class LiteLLMAIAPI(AIAPI):
             )
             self.model = model
             self._dec_interface.info(f"Model set to {model}")
+
+            # update global
+            global active_model
+            active_model = model

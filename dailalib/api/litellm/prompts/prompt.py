@@ -58,6 +58,11 @@ class Prompt:
         if self.ai_api is None:
             raise Exception("api must be set before querying!")
 
+        # this is a hack to get the active model and prompt style in many threads in IDA Pro
+        from ..litellm_api import active_model, active_prompt_style
+        self.ai_api.model = active_model
+        self.ai_api.prompt_style = active_prompt_style
+
         @AIAPI.requires_function
         def _query_model(ai_api=self.ai_api, function=function, dec_text=dec_text, **_kwargs) -> Union[Dict, str]:
             if not ai_api:
