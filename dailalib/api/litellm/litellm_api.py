@@ -80,21 +80,31 @@ class LiteLLMAIAPI(AIAPI):
         if not self.api_key:
             raise ValueError(f"Model API key is not set. Please set it before querying the model {self.model}")
 
+        prompt_model = model or self.model
         response = completion(
-            model=model or self.model,
+            model=prompt_model,
             messages=[
                 {"role": "user", "content": prompt}
             ],
             max_tokens=max_tokens,
             timeout=60,
         )
-
+        # get the answer
         try:
             answer = response.choices[0].message.content
         except (KeyError, IndexError) as e:
             answer = None
 
-        return answer
+        # get the estimated cost
+        try:
+            prompt_tokens = response.usage.prompt_tokens
+            completion_tokens = response.usage.completion_tokens
+        except (KeyError, IndexError) as e:
+            prompt_tokens, completion_tokens = None, None
+        cost = self.llm_cost(prompt_model, prompt_tokens, completion_tokens) \
+            if prompt_tokens is not None and completion_tokens is not None else None
+
+        return answer, cost
 
     @staticmethod
     def estimate_token_amount(content: str, model=DEFAULT_MODEL):
@@ -121,6 +131,26 @@ class LiteLLMAIAPI(AIAPI):
         decompilation = "\n".join(dec_lines)
 
         return LiteLLMAIAPI.fit_decompilation_to_token_max(decompilation, delta_step=delta_step, model=model)
+
+    @staticmethod
+    def llm_cost(model_name: str, prompt_tokens: int, completion_tokens: int) -> float | None:
+        # these are the $ per million tokens
+        COST = {
+            "gpt-4o": {"prompt_price": 2.5, "completion_price": 10},
+            "gpt-4o-mini": {"prompt_price": 0.150, "completion_price": 0.600},
+            "gpt-4-turbo": {"prompt_price": 10, "completion_price": 30},
+            "claude-3.5-sonnet-20240620": {"prompt_price": 3, "completion_price": 15},
+            "gemini/gemini-pro": {"prompt_price": 0.150, "completion_price": 0.600},
+            "vertex_ai_beta/gemini-pro": {"prompt_price": 0.150, "completion_price": 0.600},
+        }
+        if model_name not in COST:
+            return None
+
+        llm_price = COST[model_name]
+        prompt_price = (prompt_tokens / 1000000) * llm_price["prompt_price"]
+        completion_price = (completion_tokens / 1000000) * llm_price["completion_price"]
+
+        return round(prompt_price + completion_price, 5)
 
     #
     # LMM Settings

@@ -2,6 +2,7 @@ import json
 import re
 from typing import Optional, Union, Dict, Callable
 import textwrap
+import time
 
 from ...ai_api import AIAPI
 from ..litellm_api import LiteLLMAIAPI
@@ -90,9 +91,17 @@ class Prompt:
             self.last_rendered_template = query_text
             ai_api.info(f"Prompting using: model={self.ai_api.model} and style={self.ai_api.prompt_style}")
 
-            ai_api.on_query(self.name, self.ai_api.model, self.ai_api.prompt_style, function, dec_text)
-            response += self.ai_api.query_model(query_text)
-            #ai_api.info(f"Response received from AI: {response}")
+            start_time = time.time()
+            _resp, cost = ai_api.query_model(query_text)
+            response += _resp
+            end_time = time.time()
+            total_time = end_time - start_time
+
+            # callback to handlers of post-query
+            ai_api.on_query(
+                self.name, self.ai_api.model, self.ai_api.prompt_style, function, dec_text, total_time=total_time, cost=cost
+            )
+
             default_response = {} if self._json_response else ""
             if not response:
                 ai_api.warning(f"Response received from AI was empty! AI failed to answer.")
@@ -119,14 +128,14 @@ class Prompt:
             else:
                 response += self._posttext_response if self._pretext_response else ""
 
-            if isinstance(response, dict) or isinstance(response, str):
-                resp_len = len(response)
-                if resp_len:
-                    ai_api.info(f"Response of len={resp_len} received from AI...")
-                else:
-                    ai_api.warning(f"Response recieved from AI, but it was empty! AI failed to answer.")
-            else:
-                ai_api.info("Response received from AI!")
+            resp_len = len(str(response))
+            log_str = f"Response received from AI after {total_time:.2f}s."
+            if cost is not None:
+                log_str += f" Cost: {cost:.3f}."
+            log_str += f" Length: {resp_len}."
+            if not resp_len:
+                log_str += f" AI likely failed to answer coherently."
+            ai_api.info(log_str)
 
             if ai_api.has_decompiler_gui and response:
                 ai_api.info("Updating the decompiler with the AI response...")
