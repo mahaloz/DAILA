@@ -30,6 +30,7 @@ class LiteLLMAIAPI(AIAPI):
         self,
         api_key: Optional[str] = None,
         model: str = DEFAULT_MODEL,
+        prompt_style: str = "few-shot",
         prompts: Optional[list] = None,
         fit_to_tokens: bool = False,
         chat_use_ctx: bool = True,
@@ -41,13 +42,13 @@ class LiteLLMAIAPI(AIAPI):
         # default to openai api key if not provided
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
         self.model = model
+        self.prompt_style = prompt_style
         self.fit_to_tokens = fit_to_tokens
         self.chat_use_ctx = chat_use_ctx
         self.chat_event_callbacks = chat_event_callbacks or {"send": None, "receive": None}
 
         # delay prompt import
-        from .prompts import PROMPTS, DEFAULT_STYLE
-        self.prompt_style = DEFAULT_STYLE
+        from .prompts import PROMPTS
         prompts = prompts + PROMPTS if prompts else PROMPTS
         self.prompts_by_name = {p.name: p for p in prompts}
 
@@ -158,7 +159,7 @@ class LiteLLMAIAPI(AIAPI):
 
     @property
     def api_key(self):
-        if not self._api_key:
+        if not self._api_key or self.model is None:
             return None
         elif self.model in self.OPENAI_MODELS:
             return os.getenv("OPENAI_API_KEY", None)
@@ -174,7 +175,7 @@ class LiteLLMAIAPI(AIAPI):
     @api_key.setter
     def api_key(self, value):
         self._api_key = value
-        if self._api_key:
+        if self._api_key and self.model is not None:
             if self.model in self.OPENAI_MODELS:
                 os.environ["OPENAI_API_KEY"] = self._api_key
             elif "claude" in self.model:
@@ -191,6 +192,16 @@ class LiteLLMAIAPI(AIAPI):
         else:
             api_key = api_key_or_path
         self.api_key = api_key
+
+    def _set_prompt_style(self, prompt_style):
+        self.prompt_style = prompt_style
+        global active_prompt_style
+        active_prompt_style = prompt_style
+
+    def _set_model(self, model):
+        self.model = model
+        global active_model
+        active_model = model
 
     def ask_prompt_style(self, *args, **kwargs):
         if self._dec_interface is not None:
@@ -212,12 +223,8 @@ class LiteLLMAIAPI(AIAPI):
                     self._dec_interface.error(f"Prompt style {p_style} is not supported.")
                     return
 
-                self.prompt_style = p_style
+                self._set_prompt_style(p_style)
                 self._dec_interface.info(f"Prompt style set to {p_style}")
-
-                # update global
-                global active_prompt_style
-                active_prompt_style = p_style
 
     def ask_model(self, *args, **kwargs):
         if self._dec_interface is not None:
@@ -231,9 +238,6 @@ class LiteLLMAIAPI(AIAPI):
                 model_choices,
                 title="DAILA"
             )
-            self.model = model
+            self._set_model(model)
             self._dec_interface.info(f"Model set to {model}")
 
-            # update global
-            global active_model
-            active_model = model

@@ -5,6 +5,11 @@ DAILA was featured in the keynote talk at [HITCON CMT 2023](https://youtu.be/Hbr
 
 ![](./assets/ida_daila.png)
 
+**Join our discord below for more online help** (hosted on the BinSync server):
+
+[![Discord](https://img.shields.io/discord/900841083532087347?label=Discord&style=plastic)](https://discord.gg/wZSCeXnEvR)
+
+
 ## Supported Decompilers and AI Systems
 DAILA interacts with the decompiler abstractly through the [LibBS](https://github.com/binsync/libbs) library.
 This allows DAILA to support the following decompilers:

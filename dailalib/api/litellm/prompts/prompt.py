@@ -64,6 +64,17 @@ class Prompt:
         self.ai_api.model = active_model
         self.ai_api.prompt_style = active_prompt_style
 
+        # this can occur if the model and style are forcefully set to None (so a user must choose)
+        if self.ai_api.model is None:
+            self.ai_api.info("No model set, asking for model...")
+            self.ai_api.ask_model()
+        if self.ai_api.prompt_style is None:
+            self.ai_api.info("No prompt style set, asking for prompt style...")
+            self.ai_api.ask_prompt_style()
+        if self.ai_api.model is None or self.ai_api.prompt_style is None:
+            self.ai_api.error("Model or prompt style not set! Bailing prompting...")
+            return {}
+
         @AIAPI.requires_function
         def _query_model(ai_api=self.ai_api, function=function, dec_text=dec_text, **_kwargs) -> Union[Dict, str]:
             if not ai_api:
