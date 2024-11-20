@@ -203,6 +203,11 @@ class LiteLLMAIAPI(AIAPI):
         global active_model
         active_model = model
 
+    def get_model(self):
+        # TODO: this hack needs to be refactored later
+        global active_model
+        return str(active_model)
+
     def ask_prompt_style(self, *args, **kwargs):
         if self._dec_interface is not None:
             from .prompts import ALL_STYLES

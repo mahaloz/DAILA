@@ -27,6 +27,7 @@ Acknowledging the context, by responding with:
 class LLMChatClient(QWidget):
     def __init__(self, ai_api: "LiteLLMAIAPI", parent=None, context: Context = None):
         super(LLMChatClient, self).__init__(parent)
+        self.model = ai_api.get_model()
         self.ai_api = ai_api
         self.context = context
         self.setWindowTitle('LLM Chat')
@@ -65,6 +66,12 @@ class LLMChatClient(QWidget):
         # Chat history
         self.chat_history = []
 
+        # model check
+        if not self.model:
+            self.ai_api.warning("No model set. Close the chat window and please set a model before using the chat")
+            return
+
+        # preset the very first interaction
         # create a context for this first message
         if ai_api.chat_use_ctx:
             ai_api.info("Collecting context for the current function...")
@@ -80,6 +87,9 @@ class LLMChatClient(QWidget):
                 # set the text to the prompt
                 self.input_text.setText(prompt)
                 self.send_message(add_text=False, role="system")
+        else:
+            self.input_text.setText("Say how can I help you.")
+            self.send_message(add_text=False, role="system")
 
     def add_message(self, text, is_user):
         # Message bubble
@@ -142,7 +152,7 @@ class LLMChatClient(QWidget):
         self.send_button.setDisabled(True)
 
         # Start a thread to get the response
-        self.thread = LLMThread(self.chat_history, self.ai_api.model if self.ai_api else "gpt-4o")
+        self.thread = LLMThread(self.chat_history, self.model)
         self.thread.response_received.connect(lambda msg: self.receive_message(msg))
         self.thread.start()
 
