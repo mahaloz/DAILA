@@ -88,7 +88,7 @@ class LLMChatClient(QWidget):
                 self.input_text.setText(prompt)
                 self.send_message(add_text=False, role="system")
         else:
-            self.input_text.setText("Say how can I help you.")
+            self.input_text.setText("You are an assistant that helps understand code.")
             self.send_message(add_text=False, role="system")
 
     def add_message(self, text, is_user):

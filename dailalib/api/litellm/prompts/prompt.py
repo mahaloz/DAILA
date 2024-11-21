@@ -75,12 +75,12 @@ class Prompt:
             self.ai_api.error("Model or prompt style not set! Bailing prompting...")
             return {}
 
+        self.ai_api.info(f"Querying {self.name} prompt...")
         @AIAPI.requires_function
         def _query_model(ai_api=self.ai_api, function=function, dec_text=dec_text, **_kwargs) -> Union[Dict, str]:
             if not ai_api:
                 return {}
 
-            ai_api.info(f"Querying {self.name} prompt with function {function}...")
             # construct the intial template
             response = self._pretext_response if self._pretext_response and not self._json_response else ""
             template = self._load_template(self.ai_api.prompt_style)
@@ -100,7 +100,7 @@ class Prompt:
                 few_shot=bool(self.ai_api.prompt_style == PromptType.FEW_SHOT),
             )
             self.last_rendered_template = query_text
-            ai_api.info(f"Prompting using: model={self.ai_api.model} and style={self.ai_api.prompt_style}")
+            ai_api.info(f"Prompting using: model={self.ai_api.model} and style={self.ai_api.prompt_style} on {function}")
 
             start_time = time.time()
             _resp, cost = ai_api.query_model(query_text)
