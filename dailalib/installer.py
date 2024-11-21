@@ -3,6 +3,12 @@ from pathlib import Path
 
 from libbs.plugin_installer import LibBSPluginInstaller
 
+VARBERT_AVAILABLE = True
+try:
+    import varbert
+except ImportError:
+    VARBERT_AVAILABLE = False
+
 
 class DAILAInstaller(LibBSPluginInstaller):
     def __init__(self):
@@ -67,7 +73,10 @@ class DAILAInstaller(LibBSPluginInstaller):
     def display_epilogue(self):
         super().display_epilogue()
         print("")
-        self.install_local_models()
+        if VARBERT_AVAILABLE:
+            self.install_local_models()
+        else:
+            self.warn("VarBERT not installed, reinstall with `pip install dailalib[full]` to enable local models if you would like them.")
 
     def install_local_models(self):
         self.info("We will now download local models for each decompiler you've installed. Ctrl+C to cancel.")
