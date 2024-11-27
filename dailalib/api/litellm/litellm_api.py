@@ -172,10 +172,12 @@ class LiteLLMAIAPI(AIAPI):
             return os.getenv("ANTHROPIC_API_KEY", None)
         elif "gemini/gemini" in self.model:
             return os.getenv("GEMINI_API_KEY", None)
-        elif "vertex" in self.model:
-            return self._api_key
         elif "perplexity" in self.model:
             return os.getenv("PERPLEXITY_API_KEY", None)
+        elif "vertex" in self.model:
+            return self._api_key
+        else:
+            return None
 
     @api_key.setter
     def api_key(self, value):
