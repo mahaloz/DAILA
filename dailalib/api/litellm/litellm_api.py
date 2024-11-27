@@ -23,6 +23,7 @@ class LiteLLMAIAPI(AIAPI):
         "claude-3-5-sonnet-20240620": 200_000,
         "gemini/gemini-pro": 12_288,
         "vertex_ai_beta/gemini-pro": 12_288,
+        "perplexity/llama-3.1-sonar-large-128k-online": 127_072
     }
 
     # replacement strings for API calls
@@ -143,6 +144,10 @@ class LiteLLMAIAPI(AIAPI):
             "claude-3.5-sonnet-20240620": {"prompt_price": 3, "completion_price": 15},
             "gemini/gemini-pro": {"prompt_price": 0.150, "completion_price": 0.600},
             "vertex_ai_beta/gemini-pro": {"prompt_price": 0.150, "completion_price": 0.600},
+            # welp perplex doesn't have a completion price for now in their API :X
+            "perplexity/llama-3.1-sonar-small-128k-online": {"prompt_price": 0.150, "completion_price": 0.600},
+            "perplexity/llama-3.1-sonar-large-128k-online": {"prompt_price": 0.150, "completion_price": 0.600},
+            "perplexity/llama-3.1-sonar-huge-128k-online": {"prompt_price": 0.150, "completion_price": 0.600},
         }
         if model_name not in COST:
             return None
@@ -169,8 +174,8 @@ class LiteLLMAIAPI(AIAPI):
             return os.getenv("GEMINI_API_KEY", None)
         elif "vertex" in self.model:
             return self._api_key
-        else:
-            return None
+        elif "perplexity" in self.model:
+            return os.getenv("PERPLEXITY_API_KEY", None)
 
     @api_key.setter
     def api_key(self, value):
@@ -182,6 +187,8 @@ class LiteLLMAIAPI(AIAPI):
                 os.environ["ANTHROPIC_API_KEY"] = self._api_key
             elif "gemini/gemini" in self.model:
                 os.environ["GEMINI_API_KEY"] = self._api_key
+            elif "perplexity" in self.model: 
+                os.environ["PERPLEXITY_API_KEY"] = self._api_key
 
     def ask_api_key(self, *args, **kwargs):
         api_key_or_path = self._dec_interface.gui_ask_for_string("Enter you AI API Key or Creds Path:", title="DAILA")
