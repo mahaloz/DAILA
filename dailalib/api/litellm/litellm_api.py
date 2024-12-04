@@ -95,7 +95,7 @@ class LiteLLMAIAPI(AIAPI):
             max_tokens=max_tokens,
             timeout=60,
             api_base=self.custom_endpoint if self.custom_endpoint else None,  # Use custom endpoint if set
-            api_key="dummy" if self.custom_endpoint and not self.api_key else self.api_key # In most of cases custom endpoint doesn't need the api_key
+            api_key=self.api_key if not self.custom_endpoint else "dummy" # In most of cases custom endpoint doesn't need the api_key
         )
         # get the answer
         try:
@@ -213,13 +213,24 @@ class LiteLLMAIAPI(AIAPI):
 
     def ask_custom_endpoint(self, *args, **kwargs):
         custom_endpoint = self._dec_interface.gui_ask_for_string("Enter your custom OpenAI endpoint:", title="DAILA")
-        # TODO verify the input
-        self.custom_endpoint = custom_endpoint
+        if not custom_endpoint.strip():
+            self.custom_endpoint = None
+            self._dec_interface.info(f"Custom endpoint disabled, defaulting to online API")
+            return
+        if not (custom_endpoint.lower().startswith("http://") or custom_endpoint.lower().startswith("https://")):
+            self.custom_endpoint = None
+            self._dec_interface.error("Invalid endpoint format")
+            return
+        self.custom_endpoint = custom_endpoint.strip()
         self._dec_interface.info(f"Custom endpoint set to {self.custom_endpoint}")
 
     def ask_custom_model(self, *args, **kwargs):
         custom_model = self._dec_interface.gui_ask_for_string("Enter your custom OpenAI model name:", title="DAILA")
-        self.custom_model = "openai/" + custom_model
+        if not custom_model.strip():
+            self.custom_model = None
+            self._dec_interface.info(f"Custom model selection cleared")
+            return
+        self.custom_model = "openai/" + custom_model.strip()
         self._dec_interface.info(f"Custom model set to {self.custom_model}")
 
     def _set_prompt_style(self, prompt_style):
