@@ -108,6 +108,8 @@ As an example, to use the OpenAI API, you must have an OpenAI API key.
 If your decompiler does not have access to the `OPENAI_API_KEY` environment variable, then you must use the decompiler option from
 DAILA to set the API key.
 
+In `Settings`, you can also add/use any OpenAI-based LLM endpoint, like using Llama2.
+
 Currently, DAILA supports the following prompts:
 - Summarize a function
 - Rename variables
