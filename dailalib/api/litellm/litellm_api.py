@@ -36,6 +36,8 @@ class LiteLLMAIAPI(AIAPI):
         fit_to_tokens: bool = False,
         chat_use_ctx: bool = True,
         chat_event_callbacks: Optional[dict] = None,
+        custom_endpoint: Optional[str] = None,
+        custom_model: Optional[str] = None,
         **kwargs
     ):
         super().__init__(**kwargs)
@@ -47,6 +49,8 @@ class LiteLLMAIAPI(AIAPI):
         self.fit_to_tokens = fit_to_tokens
         self.chat_use_ctx = chat_use_ctx
         self.chat_event_callbacks = chat_event_callbacks or {"send": None, "receive": None}
+        self.custom_endpoint = custom_endpoint
+        self.custom_model = custom_model
 
         # delay prompt import
         from .prompts import PROMPTS
@@ -79,10 +83,10 @@ class LiteLLMAIAPI(AIAPI):
         # delay import because litellm attempts to query the server on import to collect cost information.
         from litellm import completion
 
-        if not self.api_key:
+        if not self.api_key and not self.custom_endpoint:
             raise ValueError(f"Model API key is not set. Please set it before querying the model {self.model}")
 
-        prompt_model = model or self.model
+        prompt_model = (model or self.model) if not self.custom_endpoint else self.custom_model
         response = completion(
             model=prompt_model,
             messages=[
@@ -90,12 +94,17 @@ class LiteLLMAIAPI(AIAPI):
             ],
             max_tokens=max_tokens,
             timeout=60,
+            api_base=self.custom_endpoint if self.custom_endpoint else None,  # Use custom endpoint if set
+            api_key=self.api_key if not self.custom_endpoint else "dummy" # In most of cases custom endpoint doesn't need the api_key
         )
         # get the answer
         try:
             answer = response.choices[0].message.content
         except (KeyError, IndexError) as e:
             answer = None
+
+        if self.custom_endpoint:
+            return answer, 0
 
         # get the estimated cost
         try:
@@ -189,7 +198,7 @@ class LiteLLMAIAPI(AIAPI):
                 os.environ["ANTHROPIC_API_KEY"] = self._api_key
             elif "gemini/gemini" in self.model:
                 os.environ["GEMINI_API_KEY"] = self._api_key
-            elif "perplexity" in self.model: 
+            elif "perplexity" in self.model:
                 os.environ["PERPLEXITY_API_KEY"] = self._api_key
 
     def ask_api_key(self, *args, **kwargs):
@@ -201,6 +210,28 @@ class LiteLLMAIAPI(AIAPI):
         else:
             api_key = api_key_or_path
         self.api_key = api_key
+
+    def ask_custom_endpoint(self, *args, **kwargs):
+        custom_endpoint = self._dec_interface.gui_ask_for_string("Enter your custom OpenAI endpoint:", title="DAILA")
+        if not custom_endpoint.strip():
+            self.custom_endpoint = None
+            self._dec_interface.info(f"Custom endpoint disabled, defaulting to online API")
+            return
+        if not (custom_endpoint.lower().startswith("http://") or custom_endpoint.lower().startswith("https://")):
+            self.custom_endpoint = None
+            self._dec_interface.error("Invalid endpoint format")
+            return
+        self.custom_endpoint = custom_endpoint.strip()
+        self._dec_interface.info(f"Custom endpoint set to {self.custom_endpoint}")
+
+    def ask_custom_model(self, *args, **kwargs):
+        custom_model = self._dec_interface.gui_ask_for_string("Enter your custom OpenAI model name:", title="DAILA")
+        if not custom_model.strip():
+            self.custom_model = None
+            self._dec_interface.info(f"Custom model selection cleared")
+            return
+        self.custom_model = "openai/" + custom_model.strip()
+        self._dec_interface.info(f"Custom model set to {self.custom_model}")
 
     def _set_prompt_style(self, prompt_style):
         self.prompt_style = prompt_style
