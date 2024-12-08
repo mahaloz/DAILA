@@ -93,13 +93,14 @@ class LiteLLMAIAPI(AIAPI):
                 {"role": "user", "content": prompt}
             ],
             max_tokens=max_tokens,
-            timeout=60,
+            timeout=60 if not self.custom_endpoint else 300,
             api_base=self.custom_endpoint if self.custom_endpoint else None,  # Use custom endpoint if set
             api_key=self.api_key if not self.custom_endpoint else "dummy" # In most of cases custom endpoint doesn't need the api_key
         )
         # get the answer
         try:
             answer = response.choices[0].message.content
+            if self.custom_endpoint: print(answer)
         except (KeyError, IndexError) as e:
             answer = None
 
