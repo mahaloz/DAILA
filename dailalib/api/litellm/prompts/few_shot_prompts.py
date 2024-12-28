@@ -9,7 +9,7 @@ You eventually respond with a valid json. As an example:
     "sub_404000": "fibonacci",
 }
 
-{% if (few_shot or cot) %}
+{% if few_shot %}
 # Example
 Here is an example. Given the following code:
 ```
