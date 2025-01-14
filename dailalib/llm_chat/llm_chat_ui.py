@@ -189,13 +189,17 @@ class LLMThread(QThread):
         self.model_name = model_name
 
     def run(self):
-        from litellm import completion
+        import litellm
 
-        response = completion(
+        # must set modify_params to True to deal with Claude
+        litellm.modify_params = True
+        response = litellm.completion(
             model=self.model_name,
             messages=self.chat_history,
             timeout=60,
+
         )
+        litellm.modify_params = False
 
         try:
             answer = response.choices[0].message.content
