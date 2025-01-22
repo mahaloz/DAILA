@@ -23,7 +23,7 @@ def main():
     parser.add_argument(
         "-s", "--server", help="Run a a headless server for DAILA", choices=["ghidra"]
     )
-    parser.add_argument(
+    parser.add_argument(s
         "-v", "--version", action="version", version=f"{dailalib.__version__}"
     )
     args = parser.parse_args()
