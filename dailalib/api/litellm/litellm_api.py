@@ -36,6 +36,88 @@ class LiteLLMAIAPI(AIAPI):
         "sonar": 127_072,
     }
 
+    def load_config(self):
+        self.config.load()
+        self.model = self.config.model
+        self.api_key = self.config.api_key
+        self.prompt_style = self.config.prompt_style
+        self.custom_endpoint = self.config.custom_endpoint
+        self.custom_model = self.config.custom_model
+        # update the globals (for threading hacks)
+        self._set_model(self.model)
+        self._set_prompt_style(self.prompt_style)
+
+    @property
+    def api_key(self):
+        # if this key is load from config, just skip the next steps 
+        if self.is_load_from_config:
+            return self._api_key
+        
+        if not self._api_key or self.model is None:
+            return None
+        elif self.model in self.OPENAI_MODELS:
+            return os.getenv("OPENAI_API_KEY", None)
+        elif "claude" in self.model:
+            return os.getenv("ANTHROPIC_API_KEY", None)
+        elif "gemini/gemini" in self.model:
+            return os.getenv("GEMINI_API_KEY", None)
+        elif "sonar" in self.model or "perplexity" in self.model:
+            return os.getenv("PERPLEXITY_API_KEY", None)
+        elif "vertex" in self.model:
+            return self._api_key
+        else:
+            return None
+
+    @api_key.setter
+    def api_key(self, value):
+        self._api_key = value
+        _l.info(f"API key set to {self.model}")
+        if self._api_key and self.model is not None:
+            if self.model in self.OPENAI_MODELS:
+                os.environ["OPENAI_API_KEY"] = self._api_key
+            elif "claude" in self.model:
+                os.environ["ANTHROPIC_API_KEY"] = self._api_key
+            elif "gemini/gemini" in self.model:
+                os.environ["GEMINI_API_KEY"] = self._api_key
+            elif "sonar" in self.model or "perplexity" in self.model:
+                os.environ["PERPLEXITY_API_KEY"] = self._api_key
+            elif "vertex" in self.model:
+                os.environ["VERTEX_API_KEY"] = self._api_key
+            else:
+                _l.error(f"API key not set for model {self.model}")
+
+    @property
+    def custom_model(self):
+        return self._custom_model
+
+    @custom_model.setter 
+    def custom_model(self, value):
+        custom_model = value
+        if not custom_model.strip():
+            self._custom_model = None
+            _l.info(f"Custom model selection cleared, or not in use")
+            return
+        self._custom_model = "openai/" + custom_model.strip()
+        _l.info(f"Custom model set to {self._custom_model}")
+
+    @property
+    def custom_endpoint(self):
+        return self._custom_endpoint
+    
+    @custom_endpoint.setter
+    def custom_endpoint(self, value):
+        custom_endpoint = value
+        if not custom_endpoint.strip():
+            self._custom_endpoint = None
+            _l.info(f"Custom endpoint disabled, defaulting to online API")
+            return
+        if not (custom_endpoint.lower().startswith("http://") or custom_endpoint.lower().startswith("https://")):
+            self._custom_endpoint = None
+            _l.error("Invalid endpoint format")
+            return
+        self._custom_endpoint = custom_endpoint.strip()
+        _l.info(f"Custom endpoint set to {self._custom_endpoint}")
+
     # replacement strings for API calls
     def __init__(
         self,
@@ -59,32 +141,23 @@ class LiteLLMAIAPI(AIAPI):
         # Check if the config file exists. Preferably load the config file 
         if self.config.save_location.exists():
             self.is_load_from_config = True 
-            self.config.load()
-            model = self.config.model
-            api_key = self.config.api_key if self.config.api_key != "THISISAFAKEAPIKEY" else None # don't use the fake api key
-            prompt_style = self.config.prompt_style
-            custom_endpoint = self.config.custom_endpoint
-            custom_model = self.config.custom_model
+            self.load_config()
+        else: 
+            # default values 
+            self._api_key = None
+            # default to openai api key if not provided
+            self.api_key = api_key or os.getenv("OPENAI_API_KEY")
+            self.model = model
+            self.prompt_style = prompt_style
+            self.fit_to_tokens = fit_to_tokens
+            self.chat_use_ctx = chat_use_ctx
+            self.chat_event_callbacks = chat_event_callbacks or {"send": None, "receive": None}
+            self.custom_endpoint = custom_endpoint
+            self.custom_model = custom_model
 
-        self._api_key = None
-        # default to openai api key if not provided
-        self.api_key = api_key or os.getenv("OPENAI_API_KEY")
-        self.model = model
-        self.prompt_style = prompt_style
         self.fit_to_tokens = fit_to_tokens
         self.chat_use_ctx = chat_use_ctx
         self.chat_event_callbacks = chat_event_callbacks or {"send": None, "receive": None}
-        self.custom_endpoint = custom_endpoint
-        self.custom_model = custom_model
-
-        # if the config is not loaded at first, create a new config file for next time 
-        if not self.is_load_from_config:
-            self.config.api_key = self.api_key
-            self.config.model = self.model
-            self.config.prompt_style = self.prompt_style
-            self.config.custom_endpoint = self.custom_endpoint
-            self.config.custom_model = self.custom_model
-            self.config.save()
 
         # delay prompt import
         from .prompts import PROMPTS
@@ -205,79 +278,6 @@ class LiteLLMAIAPI(AIAPI):
 
         return round(prompt_price + completion_price, 5)
 
-    #
-    # LLM Settings
-    #
-
-    @property
-    def api_key(self):
-        # if this key is load from config, just skip the next steps 
-        if self.is_load_from_config:
-            return self._api_key
-        
-        if not self._api_key or self.model is None:
-            return None
-        elif self.model in self.OPENAI_MODELS:
-            return os.getenv("OPENAI_API_KEY", None)
-        elif "claude" in self.model:
-            return os.getenv("ANTHROPIC_API_KEY", None)
-        elif "gemini/gemini" in self.model:
-            return os.getenv("GEMINI_API_KEY", None)
-        elif "sonar" in self.model or "perplexity" in self.model:
-            return os.getenv("PERPLEXITY_API_KEY", None)
-        elif "vertex" in self.model:
-            return self._api_key
-        else:
-            return None
-
-    @api_key.setter
-    def api_key(self, value):
-        self._api_key = value
-        if self._api_key and self.model is not None:
-            if self.model in self.OPENAI_MODELS:
-                os.environ["OPENAI_API_KEY"] = self._api_key
-            elif "claude" in self.model:
-                os.environ["ANTHROPIC_API_KEY"] = self._api_key
-            elif "gemini/gemini" in self.model:
-                os.environ["GEMINI_API_KEY"] = self._api_key
-            elif "sonar" in self.model or "perplexity" in self.model:
-                os.environ["PERPLEXITY_API_KEY"] = self._api_key
-            elif "vertex" in self.model:
-                os.environ["VERTEX_API_KEY"] = self._api_key
-            else:
-                _l.error(f"API key not set for model {self.model}")
-
-    @property
-    def custom_model(self):
-        return self._custom_model
-
-    @custom_model.setter 
-    def custom_model(self, value):
-        custom_model = value
-        if not custom_model.strip():
-            self._custom_model = None
-            _l.info(f"Custom model selection cleared, or not in use")
-            return
-        self._custom_model = "openai/" + custom_model.strip()
-        _l.info(f"Custom model set to {self._custom_model}")
-
-    @property
-    def custom_endpoint(self):
-        return self._custom_endpoint
-    @custom_endpoint.setter
-    def custom_endpoint(self, value):
-        custom_endpoint = value
-        if not custom_endpoint.strip():
-            self._custom_endpoint = None
-            _l.info(f"Custom endpoint disabled, defaulting to online API")
-            return
-        if not (custom_endpoint.lower().startswith("http://") or custom_endpoint.lower().startswith("https://")):
-            self._custom_endpoint = None
-            _l.error("Invalid endpoint format")
-            return
-        self._custom_endpoint = custom_endpoint.strip()
-        _l.info(f"Custom endpoint set to {self._custom_endpoint}")
-
     def _set_prompt_style(self, prompt_style):
         self.prompt_style = prompt_style
         global active_prompt_style
@@ -292,79 +292,10 @@ class LiteLLMAIAPI(AIAPI):
         # TODO: this hack needs to be refactored later
         global active_model
         return str(active_model)
-
-
-    # These ask functions are not used in the current version of DAILA
-
-    # def ask_prompt_style(self, *args, **kwargs):
-    #     if self._dec_interface is not None:
-    #         from .prompts import ALL_STYLES
-
-    #         prompt_style = self.prompt_style
-    #         style_choices = ALL_STYLES.copy()
-    #         if self.prompt_style:
-    #             style_choices.remove(self.prompt_style)
-    #             style_choices = [self.prompt_style] + style_choices
-
-    #         p_style = self._dec_interface.gui_ask_for_choice(
-    #             "What prompting style would you like to use?",
-    #             style_choices,
-    #             title="DAILA"
-    #         )
-    #         if p_style != prompt_style and p_style:
-    #             if p_style not in ALL_STYLES:
-    #                 self._dec_interface.error(f"Prompt style {p_style} is not supported.")
-    #                 return
-
-    #             self._set_prompt_style(p_style)
-    #             self._dec_interface.info(f"Prompt style set to {p_style}")
-
-    # def ask_model(self, *args, **kwargs):
-    #     if self._dec_interface is not None:
-    #         model_choices = list(LiteLLMAIAPI.MODEL_TO_TOKENS.keys())
-    #         if self.model:
-    #             model_choices.remove(self.model)
-    #             model_choices = [self.model] + model_choices
-
-    #         model = self._dec_interface.gui_ask_for_choice(
-    #             "What LLM model would you like to use?",
-    #             model_choices,
-    #             title="DAILA"
-    #         )
-    #         self._set_model(model)
-    #         self._dec_interface.info(f"Model set to {model}")
-
-    # def ask_api_key(self, *args, **kwargs):
-    #     api_key_or_path = self._dec_interface.gui_ask_for_string("Enter you AI API Key or Creds Path:", title="DAILA")
-    #     if "/" in api_key_or_path or "\\" in api_key_or_path:
-    #         # treat as path
-    #         with open(api_key_or_path, "r") as f:
-    #             api_key = f.read().strip()
-    #     else:
-    #         api_key = api_key_or_path
-    #     self.api_key = api_key
-
-    # def ask_custom_endpoint(self, *args, **kwargs):
-    #     custom_endpoint = self._dec_interface.gui_ask_for_string("Enter your custom OpenAI endpoint:", title="DAILA")
-    #     if not custom_endpoint.strip():
-    #         self.custom_endpoint = None
-    #         self._dec_interface.info(f"Custom endpoint disabled, defaulting to online API")
-    #         return
-    #     if not (custom_endpoint.lower().startswith("http://") or custom_endpoint.lower().startswith("https://")):
-    #         self.custom_endpoint = None
-    #         self._dec_interface.error("Invalid endpoint format")
-    #         return
-    #     self.custom_endpoint = custom_endpoint.strip()
-    #     self._dec_interface.info(f"Custom endpoint set to {self.custom_endpoint}")
     
-    # def ask_custom_model(self, *args, **kwargs):
-    #     custom_model = self._dec_interface.gui_ask_for_string("Enter your custom OpenAI model name:", title="DAILA")
-    #     if not custom_model.strip():
-    #         self.custom_model = None
-    #         self._dec_interface.info(f"Custom model selection cleared")
-    #         return
-    #     self.custom_model = "openai/" + custom_model.strip()
-    #     self._dec_interface.info(f"Custom model set to {self.custom_model}")
+    #
+    # LLM Settings
+    #
 
     # single function to ask for all the settings
     def ask_settings(self, *args, **kwargs):
@@ -376,15 +307,7 @@ class LiteLLMAIAPI(AIAPI):
             self.is_load_from_config = True
             self.config = new_config
             self.config.save()
-            self.api_key = self.config.api_key
-            self.model = self.config.model
-            self.prompt_style = self.config.prompt_style
-            self.custom_endpoint = self.config.custom_endpoint
-            self.custom_model = self.config.custom_model
-            # update the globals (for threading hacks)
-            self._set_model(self.model)
-            self._set_prompt_style(self.prompt_style)
+            self.load_config()
             self._dec_interface.info("DAILA Settings applied.")
         else:
             self._dec_interface.error("DAILA Settings not applied.")
-    
