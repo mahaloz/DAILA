@@ -17,6 +17,14 @@ def create_plugin(*args, **kwargs):
     #
 
     litellm_api = LiteLLMAIAPI(delay_init=True)
+    
+    # load config before creating context menus. if not, the config is only be load after "OK" button is clicked in ask_settings :X 
+
+    try: 
+        litellm_api.load_config()
+    except Exception as e:
+        print(f"Error loading config: {e}. Very likely you need to update your setup in the settings dialog.")
+
     # create context menus for prompts
     gui_ctx_menu_actions = {
         f"DAILA/LLM/{prompt_name}": (prompt.desc, getattr(litellm_api, prompt_name))
