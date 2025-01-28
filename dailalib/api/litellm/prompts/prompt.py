@@ -6,7 +6,7 @@ import time
 
 from ...ai_api import AIAPI
 from ..litellm_api import LiteLLMAIAPI
-from .prompt_type import PromptType
+from dailalib.api.litellm.prompt_type import PromptType
 
 from libbs.artifacts import Comment, Function, Context
 from jinja2 import Template, StrictUndefined

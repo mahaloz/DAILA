@@ -1,70 +1,38 @@
-import getpass
 import logging
-import os
-import time
-from pathlib import Path
 from typing import Optional
+
 from .configuration import DAILAConfig
-
-# TODO: Avoid hardcopying from other files, but also prevent circular imports and do not make file too long 
-class PromptType:
-    ZERO_SHOT = "zero-shot"
-    FEW_SHOT = "few-shot"
-    COT = "chain-of-thought"
-
-AVAILABLE_STYLES = [PromptType.ZERO_SHOT, PromptType.FEW_SHOT, PromptType.COT]
-AVAILABLE_MODELS = {
-        # TODO: update the token values for o1
-        "o1-mini": 8_000,
-        "o1-preview": 8_000,
-        "gpt-4o": 8_000,
-        "gpt-4o-mini": 16_000,
-        "gpt-4-turbo": 128_000,
-        "claude-3-5-sonnet-20240620": 200_000,
-        "gemini/gemini-pro": 12_288,
-        "vertex_ai_beta/gemini-pro": 12_288,
-        # perplex is on legacy mode :( 
-        "perplexity/llama-3.1-sonar-small-128k-online": 127_072,
-        "perplexity/llama-3.1-sonar-medium-128k-online": 127_072,
-        "perplexity/llama-3.1-sonar-large-128k-online": 127_072,
-        "sonar-pro": 127_072,
-        "sonar": 127_072,
-    }.keys()
+from .prompt_type import ALL_STYLES
+from . import MODEL_TO_TOKENS
 
 from libbs.ui.qt_objects import (
-    QCheckBox,
     QDialog,
-    QDir,
-    QFileDialog,
     QGridLayout,
     QHBoxLayout,
     QLabel,
     QLineEdit,
-    QMessageBox,
     QPushButton,
     QVBoxLayout,
-    QTableWidget,
-    QTableWidgetItem,
-    QHeaderView,
-    QAbstractItemView,
     QComboBox,
 )
 
-l = logging.getLogger(__name__)
+_l = logging.getLogger(__name__)
+AVAILABLE_MODELS = MODEL_TO_TOKENS.keys()
+
 
 class DAILAConfigDialog(QDialog):
     TITLE = "DAILA Configuration"
 
-    def __init__(self, DAILAConfig: DAILAConfig, parent=None):
+    def __init__(self, config: DAILAConfig, parent=None):
         """
         Constructor for the DAILA configuration dialog.
         params: 
-        + DAILAConfig: DAILAConfig object, passed from litellm_api when calling this dialog
+        + config: config object, passed from litellm_api when calling this dialog
         """
 
         super().__init__(parent)
         self.configured = False 
-        self.DAILAConfig = DAILAConfig
+        self.DAILAConfig = config
 
         self.setWindowTitle(self.TITLE)
         self._main_layout = QVBoxLayout()
@@ -114,7 +82,7 @@ class DAILAConfigDialog(QDialog):
         
         # using dropdown for prompt style
         self._prompt_style_edit = QComboBox(self)
-        self._prompt_style_edit.addItems(AVAILABLE_STYLES)
+        self._prompt_style_edit.addItems(ALL_STYLES)
         self._prompt_style_edit.setCurrentText(prompt_style)
         self._grid_layout.addWidget(prompt_style_label, self.row, 0)
         self._grid_layout.addWidget(self._prompt_style_edit, self.row, 1)
@@ -186,7 +154,7 @@ class DAILAConfigDialog(QDialog):
     def config_dialog_exec(self):
         self.exec()
         if not self.configured: 
-            l.warning("DAILA Configuration dialog was closed without saving changes.")
+            _l.warning("DAILA Configuration dialog was closed without saving changes.")
         else: 
-            l.info("DAILA Configuration dialog was closed and changes were saved.")
+            _l.info("DAILA Configuration dialog was closed and changes were saved.")
         return self.DAILAConfig
