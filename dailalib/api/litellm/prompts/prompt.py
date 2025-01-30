@@ -150,6 +150,8 @@ class Prompt:
             ai_api.info(log_str)
 
             callback_kwargs["success"] = True
+            # fix the callback args to include the response (updated)
+            callback_args = callback_args[:-1] + [response]
             ai_api.on_query(*callback_args, **callback_kwargs)
             if ai_api.has_decompiler_gui and response:
                 ai_api.info("Updating the decompiler with the AI response...")
