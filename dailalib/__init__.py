@@ -1,4 +1,4 @@
-__version__ = "3.15.6"
+__version__ = "3.16.0"
 
 import os
 # stop LiteLLM from querying at all to the remote server
@@ -11,13 +11,17 @@ from dailalib.llm_chat import get_llm_chat_creator
 
 
 def create_plugin(*args, **kwargs):
-    from libbs.api import DecompilerInterface
-
+    from libbs.api import DecompilerInterface 
     #
     # LLM API (through LiteLLM api)
     #
 
     litellm_api = LiteLLMAIAPI(delay_init=True)
+
+    # load config before creating context menus. if not, the config is only be load after "OK" button is
+    # clicked in ask_settings :X
+    litellm_api.load_or_create_config()
+
     # create context menus for prompts
     gui_ctx_menu_actions = {
         f"DAILA/LLM/{prompt_name}": (prompt.desc, getattr(litellm_api, prompt_name))
@@ -27,12 +31,7 @@ def create_plugin(*args, **kwargs):
     gui_ctx_menu_actions["DAILA/LLM/chat"] = ("Open LLM Chat...", get_llm_chat_creator(litellm_api))
 
     # create context menus for others
-    gui_ctx_menu_actions["DAILA/LLM/Settings/update_api_key"] = ("Update API key...", litellm_api.ask_api_key)
-    gui_ctx_menu_actions["DAILA/LLM/Settings/update_pmpt_style"] = ("Change prompt style...", litellm_api.ask_prompt_style)
-    gui_ctx_menu_actions["DAILA/LLM/Settings/update_model"] = ("Change model...", litellm_api.ask_model)
-    gui_ctx_menu_actions["DAILA/LLM/Settings/update_custom_url"] = ("Set Custom OpenAI Endpoint...", litellm_api.ask_custom_endpoint)
-    gui_ctx_menu_actions["DAILA/LLM/Settings/update_custom_model"] = ("Set Custom OpenAI Model...", litellm_api.ask_custom_model)
-
+    gui_ctx_menu_actions["DAILA/LLM/Settings"] = ("Settings...", litellm_api.ask_settings)
     #
     # VarModel API (local variable renaming)
     #

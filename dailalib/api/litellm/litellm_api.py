@@ -1,32 +1,23 @@
+from pathlib import Path
 from typing import Optional
 import os
+import logging
 
 import tiktoken
 
+from . import DEFAULT_MODEL, LLM_COST, OPENAI_MODELS
 from ..ai_api import AIAPI
+from dailalib.configuration import DAILAConfig
 
 active_model = None
 active_prompt_style = None
 
+_l = logging.getLogger(__name__)
+
 
 class LiteLLMAIAPI(AIAPI):
     prompts_by_name = []
-    DEFAULT_MODEL = "gpt-4o"
-    OPENAI_MODELS = {"gpt-4", "gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo", "o1-mini", "o1-preview"}
-    MODEL_TO_TOKENS = {
-        # TODO: update the token values for o1
-        "o1-mini": 8_000,
-        "o1-preview": 8_000,
-        "gpt-4o": 8_000,
-        "gpt-4o-mini": 16_000,
-        "gpt-4-turbo": 128_000,
-        "claude-3-5-sonnet-20240620": 200_000,
-        "gemini/gemini-pro": 12_288,
-        "vertex_ai_beta/gemini-pro": 12_288,
-        "perplexity/llama-3.1-sonar-large-128k-online": 127_072
-    }
 
-    # replacement strings for API calls
     def __init__(
         self,
         api_key: Optional[str] = None,
@@ -38,9 +29,12 @@ class LiteLLMAIAPI(AIAPI):
         chat_event_callbacks: Optional[dict] = None,
         custom_endpoint: Optional[str] = None,
         custom_model: Optional[str] = None,
+        use_config: bool = True,
         **kwargs
     ):
         super().__init__(**kwargs)
+
+        # default values
         self._api_key = None
         # default to openai api key if not provided
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
@@ -51,6 +45,11 @@ class LiteLLMAIAPI(AIAPI):
         self.chat_event_callbacks = chat_event_callbacks or {"send": None, "receive": None}
         self.custom_endpoint = custom_endpoint
         self.custom_model = custom_model
+        self.config = DAILAConfig()
+        if use_config:
+            loaded = self.load_or_create_config()
+            if loaded:
+                _l.info("Loaded config file from %s", self.config.save_location)
 
         # delay prompt import
         from .prompts import PROMPTS
@@ -61,6 +60,28 @@ class LiteLLMAIAPI(AIAPI):
         global active_model, active_prompt_style
         active_model = self.model
         active_prompt_style = self.prompt_style
+
+    def load_or_create_config(self, new_config=None) -> bool:
+        if new_config:
+            self.config = new_config
+            self.config.save()
+
+        if self.config.save_location and not Path(self.config.save_location).exists():
+            return False
+
+        # load the config
+        self.config.load()
+        self.model = self.config.model
+        self.api_key = self.config.api_key
+        self.prompt_style = self.config.prompt_style
+        if self.config.custom_endpoint:
+            self.custom_endpoint = self.config.custom_endpoint
+        if self.config.custom_model:
+            self.custom_model = self.config.custom_model
+        # update the globals (for threading hacks)
+        self._set_model(self.model)
+        self._set_prompt_style(self.prompt_style)
+        return True
 
     def __dir__(self):
         return list(super().__dir__()) + list(self.prompts_by_name.keys())
@@ -73,6 +94,73 @@ class LiteLLMAIAPI(AIAPI):
             return prompt_obj.query_model
         else:
             return object.__getattribute__(self, item)
+
+    @property
+    def api_key(self):
+        if not self._api_key or self.model is None:
+            return None
+        elif self.model in OPENAI_MODELS:
+            return os.getenv("OPENAI_API_KEY", None)
+        elif "claude" in self.model:
+            return os.getenv("ANTHROPIC_API_KEY", None)
+        elif "gemini/gemini" in self.model:
+            return os.getenv("GEMINI_API_KEY", None)
+        elif "sonar" in self.model or "perplexity" in self.model:
+            return os.getenv("PERPLEXITY_API_KEY", None)
+        elif "vertex" in self.model:
+            return self._api_key
+        else:
+            return None
+
+    @api_key.setter
+    def api_key(self, value):
+        self._api_key = value
+        _l.info(f"API key set to {self.model}")
+        if self._api_key and self.model is not None:
+            if self.model in OPENAI_MODELS:
+                os.environ["OPENAI_API_KEY"] = self._api_key
+            elif "claude" in self.model:
+                os.environ["ANTHROPIC_API_KEY"] = self._api_key
+            elif "gemini/gemini" in self.model:
+                os.environ["GEMINI_API_KEY"] = self._api_key
+            elif "sonar" in self.model or "perplexity" in self.model:
+                os.environ["PERPLEXITY_API_KEY"] = self._api_key
+            elif "vertex" in self.model:
+                os.environ["VERTEX_API_KEY"] = self._api_key
+            else:
+                _l.error(f"API key not set for model {self.model}")
+
+    @property
+    def custom_model(self):
+        return self._custom_model
+
+    @custom_model.setter
+    def custom_model(self, value):
+        custom_model = value.strip() if isinstance(value, str) else None
+        if not custom_model:
+            self._custom_model = None
+            _l.info(f"Custom model selection cleared, or not in use")
+            return
+        self._custom_model = "openai/" + custom_model.strip()
+        _l.info(f"Custom model set to {self._custom_model}")
+
+    @property
+    def custom_endpoint(self):
+        return self._custom_endpoint
+
+    @custom_endpoint.setter
+    def custom_endpoint(self, value):
+        custom_endpoint = value.strip() if isinstance(value, str) else None
+        if not custom_endpoint:
+            self._custom_endpoint = None
+            _l.info(f"Custom endpoint disabled, defaulting to online API")
+            return
+        if not (custom_endpoint.lower().startswith("http://") or custom_endpoint.lower().startswith("https://")):
+            self._custom_endpoint = None
+            _l.error("Invalid endpoint format")
+            return
+        self._custom_endpoint = custom_endpoint.strip()
+        _l.info(f"Custom endpoint set to {self._custom_endpoint}")
 
     def query_model(
         self,
@@ -147,92 +235,14 @@ class LiteLLMAIAPI(AIAPI):
     @staticmethod
     def llm_cost(model_name: str, prompt_tokens: int, completion_tokens: int) -> float | None:
         # these are the $ per million tokens
-        COST = {
-            "gpt-4o": {"prompt_price": 2.5, "completion_price": 10},
-            "gpt-4o-mini": {"prompt_price": 0.150, "completion_price": 0.600},
-            "gpt-4-turbo": {"prompt_price": 10, "completion_price": 30},
-            "claude-3.5-sonnet-20240620": {"prompt_price": 3, "completion_price": 15},
-            "gemini/gemini-pro": {"prompt_price": 0.150, "completion_price": 0.600},
-            "vertex_ai_beta/gemini-pro": {"prompt_price": 0.150, "completion_price": 0.600},
-            # welp perplex doesn't have a completion price for now in their API :X
-            "perplexity/llama-3.1-sonar-small-128k-online": {"prompt_price": 0.150, "completion_price": 0.600},
-            "perplexity/llama-3.1-sonar-large-128k-online": {"prompt_price": 0.150, "completion_price": 0.600},
-            "perplexity/llama-3.1-sonar-huge-128k-online": {"prompt_price": 0.150, "completion_price": 0.600},
-        }
-        if model_name not in COST:
+        if model_name not in LLM_COST:
             return None
 
-        llm_price = COST[model_name]
+        llm_price = LLM_COST[model_name]
         prompt_price = (prompt_tokens / 1000000) * llm_price["prompt_price"]
         completion_price = (completion_tokens / 1000000) * llm_price["completion_price"]
 
         return round(prompt_price + completion_price, 5)
-
-    #
-    # LMM Settings
-    #
-
-    @property
-    def api_key(self):
-        if not self._api_key or self.model is None:
-            return None
-        elif self.model in self.OPENAI_MODELS:
-            return os.getenv("OPENAI_API_KEY", None)
-        elif "claude" in self.model:
-            return os.getenv("ANTHROPIC_API_KEY", None)
-        elif "gemini/gemini" in self.model:
-            return os.getenv("GEMINI_API_KEY", None)
-        elif "perplexity" in self.model:
-            return os.getenv("PERPLEXITY_API_KEY", None)
-        elif "vertex" in self.model:
-            return self._api_key
-        else:
-            return None
-
-    @api_key.setter
-    def api_key(self, value):
-        self._api_key = value
-        if self._api_key and self.model is not None:
-            if self.model in self.OPENAI_MODELS:
-                os.environ["OPENAI_API_KEY"] = self._api_key
-            elif "claude" in self.model:
-                os.environ["ANTHROPIC_API_KEY"] = self._api_key
-            elif "gemini/gemini" in self.model:
-                os.environ["GEMINI_API_KEY"] = self._api_key
-            elif "perplexity" in self.model:
-                os.environ["PERPLEXITY_API_KEY"] = self._api_key
-
-    def ask_api_key(self, *args, **kwargs):
-        api_key_or_path = self._dec_interface.gui_ask_for_string("Enter you AI API Key or Creds Path:", title="DAILA")
-        if "/" in api_key_or_path or "\\" in api_key_or_path:
-            # treat as path
-            with open(api_key_or_path, "r") as f:
-                api_key = f.read().strip()
-        else:
-            api_key = api_key_or_path
-        self.api_key = api_key
-
-    def ask_custom_endpoint(self, *args, **kwargs):
-        custom_endpoint = self._dec_interface.gui_ask_for_string("Enter your custom OpenAI endpoint:", title="DAILA")
-        if not custom_endpoint.strip():
-            self.custom_endpoint = None
-            self._dec_interface.info(f"Custom endpoint disabled, defaulting to online API")
-            return
-        if not (custom_endpoint.lower().startswith("http://") or custom_endpoint.lower().startswith("https://")):
-            self.custom_endpoint = None
-            self._dec_interface.error("Invalid endpoint format")
-            return
-        self.custom_endpoint = custom_endpoint.strip()
-        self._dec_interface.info(f"Custom endpoint set to {self.custom_endpoint}")
-
-    def ask_custom_model(self, *args, **kwargs):
-        custom_model = self._dec_interface.gui_ask_for_string("Enter your custom OpenAI model name:", title="DAILA")
-        if not custom_model.strip():
-            self.custom_model = None
-            self._dec_interface.info(f"Custom model selection cleared")
-            return
-        self.custom_model = "openai/" + custom_model.strip()
-        self._dec_interface.info(f"Custom model set to {self.custom_model}")
 
     def _set_prompt_style(self, prompt_style):
         self.prompt_style = prompt_style
@@ -248,42 +258,20 @@ class LiteLLMAIAPI(AIAPI):
         # TODO: this hack needs to be refactored later
         global active_model
         return str(active_model)
+    
+    #
+    # LLM Settings
+    #
 
-    def ask_prompt_style(self, *args, **kwargs):
-        if self._dec_interface is not None:
-            from .prompts import ALL_STYLES
-
-            prompt_style = self.prompt_style
-            style_choices = ALL_STYLES.copy()
-            if self.prompt_style:
-                style_choices.remove(self.prompt_style)
-                style_choices = [self.prompt_style] + style_choices
-
-            p_style = self._dec_interface.gui_ask_for_choice(
-                "What prompting style would you like to use?",
-                style_choices,
-                title="DAILA"
-            )
-            if p_style != prompt_style and p_style:
-                if p_style not in ALL_STYLES:
-                    self._dec_interface.error(f"Prompt style {p_style} is not supported.")
-                    return
-
-                self._set_prompt_style(p_style)
-                self._dec_interface.info(f"Prompt style set to {p_style}")
-
-    def ask_model(self, *args, **kwargs):
-        if self._dec_interface is not None:
-            model_choices = list(LiteLLMAIAPI.MODEL_TO_TOKENS.keys())
-            if self.model:
-                model_choices.remove(self.model)
-                model_choices = [self.model] + model_choices
-
-            model = self._dec_interface.gui_ask_for_choice(
-                "What LLM model would you like to use?",
-                model_choices,
-                title="DAILA"
-            )
-            self._set_model(model)
-            self._dec_interface.info(f"Model set to {model}")
-
+    # single function to ask for all the settings
+    def ask_settings(self, *args, **kwargs):
+        # delay import
+        from .config_dialog import DAILAConfigDialog
+        # attempts to ask for all the configurations by the user.
+        dialog = DAILAConfigDialog(self.config)
+        new_config = dialog.config_dialog_exec()
+        if new_config:
+            self.load_or_create_config(new_config=new_config)
+            self._dec_interface.info("DAILA Settings applied.")
+        else:
+            self._dec_interface.error("DAILA Settings not applied.")

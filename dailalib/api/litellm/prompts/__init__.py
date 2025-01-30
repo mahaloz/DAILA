@@ -1,4 +1,4 @@
-from .prompt_type import PromptType, DEFAULT_STYLE, ALL_STYLES
+from dailalib.api.litellm.prompt_type import PromptType
 from .prompt import Prompt
 
 
