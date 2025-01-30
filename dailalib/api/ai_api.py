@@ -118,9 +118,9 @@ class AIAPI:
 
         return _requires_function
 
-    def on_query(self, query_name, model, prompt_style, function, decompilation, **kwargs):
+    def on_query(self, query_name, model, prompt_style, function, decompilation, response, **kwargs):
         for func in self.query_callbacks:
             t = threading.Thread(
-                target=func, args=(query_name, model, prompt_style, function, decompilation), kwargs=kwargs
+                target=func, args=(query_name, model, prompt_style, function, decompilation, response), kwargs=kwargs
             )
             t.start()
