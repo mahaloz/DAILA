@@ -7,8 +7,7 @@ import tiktoken
 
 from . import DEFAULT_MODEL, LLM_COST, OPENAI_MODELS
 from ..ai_api import AIAPI
-from .configuration import DAILAConfig
-from .config_dialog import DAILAConfigDialog
+from dailalib.configuration import DAILAConfig
 
 active_model = None
 active_prompt_style = None
@@ -266,7 +265,9 @@ class LiteLLMAIAPI(AIAPI):
 
     # single function to ask for all the settings
     def ask_settings(self, *args, **kwargs):
-        # attempts to ask for all the configurations by the user. 
+        # delay import
+        from .config_dialog import DAILAConfigDialog
+        # attempts to ask for all the configurations by the user.
         dialog = DAILAConfigDialog(self.config)
         new_config = dialog.config_dialog_exec()
         if new_config:

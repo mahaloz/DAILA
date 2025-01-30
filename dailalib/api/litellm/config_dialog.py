@@ -1,7 +1,7 @@
 import logging
 from typing import Optional
 
-from .configuration import DAILAConfig
+from dailalib.configuration import DAILAConfig
 from .prompt_type import ALL_STYLES
 from . import MODEL_TO_TOKENS
 
