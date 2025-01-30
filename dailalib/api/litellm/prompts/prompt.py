@@ -109,13 +109,13 @@ class Prompt:
             total_time = end_time - start_time
 
             # callback to handlers of post-query
-            ai_api.on_query(
-                self.name, self.ai_api.model, self.ai_api.prompt_style, function, dec_text, total_time=total_time, cost=cost
-            )
+            callback_args = [self.name, self.ai_api.model, self.ai_api.prompt_style, function, dec_text, response]
+            callback_kwargs = {"total_time": total_time, "cost": cost, "success": False}
 
             default_response = {} if self._json_response else ""
             if not response:
                 ai_api.warning(f"Response received from AI was empty! AI failed to answer.")
+                ai_api.on_query(*callback_args, **callback_kwargs)
                 return default_response
 
             # changes response type to a dict
@@ -126,6 +126,7 @@ class Prompt:
 
                 json_matches = JSON_REGEX.findall(response)
                 if not json_matches:
+                    ai_api.on_query(*callback_args, **callback_kwargs)
                     return default_response
 
                 json_data = json_matches[-1]
@@ -148,6 +149,8 @@ class Prompt:
                 log_str += f" AI likely failed to answer coherently."
             ai_api.info(log_str)
 
+            callback_kwargs["success"] = True
+            ai_api.on_query(*callback_args, **callback_kwargs)
             if ai_api.has_decompiler_gui and response:
                 ai_api.info("Updating the decompiler with the AI response...")
                 self._gui_result_callback(response, function, ai_api, context=context)

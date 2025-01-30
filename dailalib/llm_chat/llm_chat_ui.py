@@ -137,7 +137,7 @@ class LLMChatClient(QWidget):
         if self.ai_api:
             send_callback = self.ai_api.chat_event_callbacks.get("send", None)
             if send_callback:
-                send_callback(user_text)
+                send_callback(user_text, model=self.model)
 
         # Display user message
         if add_text:
@@ -164,7 +164,7 @@ class LLMChatClient(QWidget):
         if self.ai_api:
             recv_callback = self.ai_api.chat_event_callbacks.get("receive", None)
             if recv_callback:
-                recv_callback(assistant_message)
+                recv_callback(assistant_message, model=self.model)
 
         # Append to chat history
         self.chat_history.append({"role": "user", "content": assistant_message})
