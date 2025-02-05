@@ -39,13 +39,13 @@ class LiteLLMAIAPI(AIAPI):
         self._use_config = use_config
         # default values
         self._api_key = None
+        self.model = model
         # default to openai api key if not provided
         if api_key or os.getenv("OPENAI_API_KEY"):
             self.api_key = api_key or os.getenv("OPENAI_API_KEY")
         elif not self._use_config:
             self.api_key = None
 
-        self.model = model
         self.prompt_style = prompt_style
         self.fit_to_tokens = fit_to_tokens
         self.chat_use_ctx = chat_use_ctx
