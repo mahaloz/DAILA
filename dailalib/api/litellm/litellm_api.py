@@ -5,6 +5,8 @@ import logging
 
 import tiktoken
 
+from libbs.decompilers import GHIDRA_DECOMPILER
+
 from . import DEFAULT_MODEL, LLM_COST, OPENAI_MODELS
 from ..ai_api import AIAPI
 from dailalib.configuration import DAILAConfig
@@ -34,10 +36,15 @@ class LiteLLMAIAPI(AIAPI):
     ):
         super().__init__(**kwargs)
 
+        self._use_config = use_config
         # default values
         self._api_key = None
         # default to openai api key if not provided
-        self.api_key = api_key or os.getenv("OPENAI_API_KEY")
+        if api_key or os.getenv("OPENAI_API_KEY"):
+            self.api_key = api_key or os.getenv("OPENAI_API_KEY")
+        elif not self._use_config:
+            self.api_key = None
+
         self.model = model
         self.prompt_style = prompt_style
         self.fit_to_tokens = fit_to_tokens
@@ -265,13 +272,39 @@ class LiteLLMAIAPI(AIAPI):
 
     # single function to ask for all the settings
     def ask_settings(self, *args, **kwargs):
-        # delay import
-        from .config_dialog import DAILAConfigDialog
-        # attempts to ask for all the configurations by the user.
-        dialog = DAILAConfigDialog(self.config)
-        new_config = dialog.config_dialog_exec()
+        # attempts to ask for all the configurations by the user
+        is_ghidra = self._dec_interface.name == GHIDRA_DECOMPILER
+        _l.info(f"Using {self._dec_interface.name} decompiler, starting with QT {self._dec_interface.qt_version}")
+        new_config = self._dec_interface.gui_run_on_main_thread(
+            self.open_config_dialog,
+            self.config,
+            make_app=is_ghidra,
+            qt_version=self._dec_interface.qt_version
+        )
+
         if new_config:
             self.load_or_create_config(new_config=new_config)
             self._dec_interface.info("DAILA Settings applied.")
         else:
             self._dec_interface.error("DAILA Settings not applied.")
+
+    @staticmethod
+    def open_config_dialog(config: DAILAConfig, make_app=False, qt_version: str = "PySide6") -> DAILAConfig:
+        # delay import to configure the qt for the right platform
+        from libbs.ui.version import set_ui_version
+        set_ui_version(qt_version)
+        from libbs.ui.qt_objects import QApplication
+        from .config_dialog import DAILAConfigDialog
+
+        if make_app:
+            app = QApplication([])
+            _l.info("Creating a new window for the DAILA settings")
+            _dialog = DAILAConfigDialog(config)
+            _l.info("Running the dialog")
+            new_config = _dialog.config_dialog_exec()
+            app.quit()
+        else:
+            dialog = DAILAConfigDialog(config)
+            new_config = dialog.config_dialog_exec()
+
+        return new_config
