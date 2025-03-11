@@ -9,8 +9,8 @@ MODEL_TO_TOKENS = {
     "gpt-4o-mini": 16_000,
     "gpt-4-turbo": 128_000,
     "claude-3-5-sonnet-20240620": 200_000,
-    "gemini/gemini-pro": 12_288,
-    "vertex_ai_beta/gemini-pro": 12_288,
+    "gemini/gemini-2.0-flash": 1_000_000,
+    "vertex_ai_beta/gemini-2.0-flash": 1_000_000,
     # perplex is on legacy mode :(
     "perplexity/llama-3.1-sonar-small-128k-online": 127_072,
     "perplexity/llama-3.1-sonar-medium-128k-online": 127_072,
@@ -24,8 +24,8 @@ LLM_COST = {
     "gpt-4o-mini": {"prompt_price": 0.150, "completion_price": 0.600},
     "gpt-4-turbo": {"prompt_price": 10, "completion_price": 30},
     "claude-3.5-sonnet-20240620": {"prompt_price": 3, "completion_price": 15},
-    "gemini/gemini-pro": {"prompt_price": 0.150, "completion_price": 0.600},
-    "vertex_ai_beta/gemini-pro": {"prompt_price": 0.150, "completion_price": 0.600},
+    "gemini/gemini-2.0-flash": {"prompt_price": 0.10, "completion_price": 0.4},
+    "vertex_ai_beta/gemini-2.0-flash": {"prompt_price": 0.10, "completion_price": 0.4},
     # perplex is on legacy mode not available from 02/22/25:(
     "perplexity/llama-3.1-sonar-small-128k-online": {"prompt_price": 0.150, "completion_price": 0.600},
     "perplexity/llama-3.1-sonar-large-128k-online": {"prompt_price": 0.150, "completion_price": 0.600},
