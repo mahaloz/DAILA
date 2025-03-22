@@ -28,6 +28,7 @@ class LLMChatClient(QWidget):
     def __init__(self, ai_api: "LiteLLMAIAPI", parent=None, context: Context = None):
         super(LLMChatClient, self).__init__(parent)
         self.model = ai_api.get_model()
+        self.custom_endpoint = ai_api.get_custom_endpoint()
         self.ai_api = ai_api
         self.context = context
         self.setWindowTitle('LLM Chat')
@@ -65,6 +66,7 @@ class LLMChatClient(QWidget):
 
         # Chat history
         self.chat_history = []
+        self.thread = None
 
         # model check
         if not self.model:
@@ -152,7 +154,9 @@ class LLMChatClient(QWidget):
         self.send_button.setDisabled(True)
 
         # Start a thread to get the response
-        self.thread = LLMThread(self.chat_history, self.model)
+        self.thread = LLMThread(
+            self.chat_history, self.model, custom_endpoint=self.custom_endpoint, api_key=self.ai_api.api_key
+        )
         self.thread.response_received.connect(lambda msg: self.receive_message(msg))
         self.thread.start()
 
@@ -183,10 +187,12 @@ class LLMChatClient(QWidget):
 class LLMThread(QThread):
     response_received = pyqtSignal(str)
 
-    def __init__(self, chat_history, model_name):
+    def __init__(self, chat_history, model_name, custom_endpoint=None, api_key=None):
         super().__init__()
         self.chat_history = chat_history.copy()
         self.model_name = model_name
+        self.custom_endpoint = custom_endpoint
+        self.api_key = api_key
 
     def run(self):
         import litellm
@@ -196,8 +202,9 @@ class LLMThread(QThread):
         response = litellm.completion(
             model=self.model_name,
             messages=self.chat_history,
-            timeout=60,
-
+            timeout=60 if not self.custom_endpoint else 300,
+            api_base=self.custom_endpoint if self.custom_endpoint else None,  # Use custom endpoint if set
+            api_key=self.api_key if not self.custom_endpoint else "dummy" # In most of cases custom endpoint doesn't need the api_key
         )
         litellm.modify_params = False
 
