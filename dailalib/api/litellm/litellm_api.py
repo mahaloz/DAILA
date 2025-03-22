@@ -13,6 +13,7 @@ from dailalib.configuration import DAILAConfig
 
 active_model = None
 active_prompt_style = None
+active_custom_endpoint = None
 
 _l = logging.getLogger(__name__)
 
@@ -64,9 +65,10 @@ class LiteLLMAIAPI(AIAPI):
         self.prompts_by_name = {p.name: p for p in prompts}
 
         # update the globals (for threading hacks)
-        global active_model, active_prompt_style
-        active_model = self.model
+        global active_model, active_prompt_style, active_custom_endpoint
+        active_model = self.model if not self.custom_model else self.custom_model
         active_prompt_style = self.prompt_style
+        active_custom_endpoint = self.custom_endpoint
 
     def load_or_create_config(self, new_config=None) -> bool:
         if new_config:
@@ -195,7 +197,6 @@ class LiteLLMAIAPI(AIAPI):
         # get the answer
         try:
             answer = response.choices[0].message.content
-            if self.custom_endpoint: print(answer)
         except (KeyError, IndexError) as e:
             answer = None
 
@@ -261,10 +262,19 @@ class LiteLLMAIAPI(AIAPI):
         global active_model
         active_model = model
 
+    def _set_custom_endpoint(self, custom_endpoint):
+        self.custom_endpoint = custom_endpoint
+        global active_custom_endpoint
+        active_custom_endpoint = custom_endpoint
+
     def get_model(self):
         # TODO: this hack needs to be refactored later
-        global active_model
-        return str(active_model)
+        global active_model, active_custom_endpoint
+        return str(active_model) if not active_custom_endpoint else str(active_custom_endpoint)
+
+    def get_custom_endpoint(self):
+        global active_custom_endpoint
+        return active_custom_endpoint
     
     #
     # LLM Settings
