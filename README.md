@@ -87,14 +87,14 @@ for function in deci.functions:
 ### Docker Container
 If you are attempting to install DAILA for a one-shot install that will not use the internet after install, like on a secure network, you can use our Docker container.
 You should either build the container yourself, save the image to a tarball, and then load it on the target machine, or you can use our pre-built image.
-You can build the container yourself by running `docker build -t daila .` in the root of this repo.
-You can also download our pre-built image by running `docker pull binsync/daila:latest` (the image is for x86_64 Linux).
+You can build the container yourself by running `docker build . -t daila` in the root of this repo.
+You can also download our pre-built image by running `docker pull mahaloz/daila:latest` (the image is for x86_64 Linux).
 The container contains DAILA and a copy of Ghidra.
 
 Now you need to foward X11 to the container so that you can see the GUI.
 To do this, you need to run the container with the following flags:
 ```bash
-docker run -it --rm -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix binsync/daila:latest
+docker run -it --rm -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix mahaloz/daila:latest
 ```
 
 In the container, you can launch ghidra from `/tools/ghidra_10.4_PUBLIC/ghidraRun`.
