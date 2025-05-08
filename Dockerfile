@@ -10,14 +10,14 @@ RUN apt-get update && apt-get -o APT::Immediate-Configure=0 install -y \
 RUN mkdir tools && mkdir /root/ghidra_scripts/
 ENV PATH "/tools/:$PATH"
 WORKDIR tools
-RUN wget https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_10.4_build/ghidra_10.4_PUBLIC_20230928.zip && \
-    unzip ghidra_10.4_PUBLIC_20230928.zip && \
-    sed -i 's/java -cp/java -Djdk.lang.Process.launchMechanism=vfork -cp/g' /tools/ghidra_10.4_PUBLIC/support/launch.sh
+RUN wget https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_11.1_build/ghidra_11.1_PUBLIC_20240607.zip && \
+    unzip ghidra_11.1_PUBLIC_20240607.zip && \
+    sed -i 's/java -cp/java -Djdk.lang.Process.launchMechanism=vfork -cp/g' /tools/ghidra_11.1_PUBLIC/support/launch.sh
 
 # copy the local pip project, install it, its plugins, and the models
 workdir /
 COPY . /DAILA/
 RUN pip3 install --upgrade pip \
-    && pip3 install -e ./DAILA \
+    && pip3 install -e ./DAILA[full] \
     && daila --single-decompiler-install ghidra /root/ghidra_scripts/
 
