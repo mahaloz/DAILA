@@ -1,7 +1,9 @@
 # DAILA 
-The Decompiler Artificial Intelligence Language Assistant (DAILA) is a unified interface for AI systems to be used in decompilers.
-Using DAILA, you can utilize various AI systems, like local and remote LLMs, all in the same scripting and GUI interfaces across many decompilers.
-DAILA was featured in the keynote talk at [HITCON CMT 2023](https://youtu.be/HbrebQiFLDs?si=TJhKSju85jTLSsiT). 
+The Decompiler Artificially Intelligent Language Assistant (DAILA) is a unified interface for AI systems to be used in decompilers.
+With DAILA, you can utilize various AI systems, like local and remote LLMs, all in the same scripting and GUI interfaces across many decompilers.
+DAILA was featured in the keynote talk at [HITCON CMT 2023](https://youtu.be/HbrebQiFLDs?si=TJhKSju85jTLSsiT) and
+was studied in the NDSS 2026 work ["Decompiling the Synergy: An Empirical Study of Human–LLM Teaming in Software Reverse Engineering"](https://www.zionbasque.com/files/papers/dec-synergy-study.pdf).
+If you are looking for the paper repo, find it [here](https://github.com/mahaloz/dec-synergy-study).
 
 ![](./assets/ida_daila.png)
 
