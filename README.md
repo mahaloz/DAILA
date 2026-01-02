@@ -16,7 +16,7 @@ If you are looking for the paper repo, find it [here](https://github.com/mahaloz
 DAILA interacts with the decompiler abstractly through the [LibBS](https://github.com/binsync/libbs) library.
 This allows DAILA to support the following decompilers:
 - IDA Pro: **>= 8.4**
-- Ghidra: **>= 11.1**
+- Ghidra: **>= 12.0**
 - Binary Ninja: **>= 2.4**
 - angr-management: **>= 9.0**
 
@@ -44,7 +44,9 @@ This will also download the VarBERT models for you through the [VarBERT API](htt
 If you happen to be installing DAILA on a machine that won't have internet access, like a secure network, you can use our Docker image in the [Docker Container](#docker-container) section.
 
 ### Ghidra Extra Steps
-You need to do a few extra steps to get Ghidra working.
+You need to do a few extra steps to get Ghidra working. First, you must be running in PyGhidra mode. You can do this
+by going to your Ghidra install directory and running `./support/pyghidraRun`.
+
 Next, enable the DAILA plugin:
 1. Start Ghidra and open a binary
 2. Goto the `Windows > Script Manager` menu
