@@ -1,11 +1,16 @@
 import typing
 
-from PyQt5.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QHBoxLayout, QTextEdit,
-    QPushButton, QLabel, QScrollArea, QFrame
+from libbs.ui.version import ui_version
+from libbs.ui.qt_objects import (
+    QApplication, QWidget, QVBoxLayout, QHBoxLayout,
+    QPushButton, QLabel, QScrollArea, QFrame,
+    Qt, QThread, Signal, QFont,
 )
-from PyQt5.QtCore import Qt, QThread, pyqtSignal, QCoreApplication
-from PyQt5.QtGui import QFont
+
+if ui_version == "PySide6":
+    from PySide6.QtWidgets import QTextEdit
+else:
+    from PyQt5.QtWidgets import QTextEdit
 
 from libbs.artifacts.context import Context
 
@@ -146,7 +151,7 @@ class LLMChatClient(QWidget):
             bubble_layout.addStretch()
 
         self.chat_layout.insertWidget(self.chat_layout.count() - 1, bubble)
-        QCoreApplication.processEvents()
+        QApplication.processEvents()
         self.chat_area.verticalScrollBar().setValue(self.chat_area.verticalScrollBar().maximum())
 
     def send_message(self, add_text=True, role="user"):
@@ -204,8 +209,8 @@ class LLMChatClient(QWidget):
 
 
 class LLMThread(QThread):
-    response_received = pyqtSignal(str)
-    history_updated = pyqtSignal(list)
+    response_received = Signal(str)
+    history_updated = Signal(list)
 
     def __init__(self, user_message, model_name, system_prompt=None,
                  message_history=None, custom_endpoint=None, api_key=None):

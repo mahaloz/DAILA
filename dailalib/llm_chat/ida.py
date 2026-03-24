@@ -1,12 +1,11 @@
 import logging
 
-from PyQt5 import sip
-from PyQt5.QtWidgets import QWidget, QVBoxLayout
-
 import idaapi
 
+from libbs.decompilers.ida.compat import get_ida_gui_version
 from libbs.ui.version import set_ui_version
-set_ui_version("PyQt5")
+set_ui_version(get_ida_gui_version())
+from libbs.ui.qt_objects import QWidget, QVBoxLayout, wrapInstance
 
 from dailalib.llm_chat.llm_chat_ui import LLMChatClient
 
@@ -22,7 +21,7 @@ class LLMChatWrapper(object):
     def __init__(self, ai_api, context=None):
         # create a dockable view
         self.twidget = idaapi.create_empty_widget(LLMChatWrapper.NAME)
-        self.widget = sip.wrapinstance(int(self.twidget), QWidget)
+        self.widget = wrapInstance(int(self.twidget), QWidget)
         self.widget.name = LLMChatWrapper.NAME
         self.width_hint = 250
 
