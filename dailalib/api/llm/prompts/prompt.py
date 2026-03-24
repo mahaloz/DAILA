@@ -5,8 +5,8 @@ import textwrap
 import time
 
 from ...ai_api import AIAPI
-from ..litellm_api import LiteLLMAIAPI
-from dailalib.api.litellm.prompt_type import PromptType
+from ..llm_api import LLMAPI
+from dailalib.api.llm.prompt_type import PromptType
 
 from libbs.artifacts import Comment, Function, Context
 from jinja2 import Template, StrictUndefined
@@ -39,7 +39,7 @@ class Prompt:
         self._gui_result_callback = gui_result_callback
         self._number_lines = number_lines
         self.desc = desc or name
-        self.ai_api: LiteLLMAIAPI = ai_api
+        self.ai_api: LLMAPI = ai_api
 
     def __str__(self):
         return f"<Prompt {self.name}>"
@@ -60,7 +60,7 @@ class Prompt:
             raise Exception("api must be set before querying!")
 
         # this is a hack to get the active model and prompt style in many threads in IDA Pro
-        from ..litellm_api import active_model, active_prompt_style
+        from ..llm_api import active_model, active_prompt_style
         self.ai_api.model = active_model
         self.ai_api.prompt_style = active_prompt_style
 
@@ -92,7 +92,7 @@ class Prompt:
 
             query_text = template.render(
                 # decompilation lines of the target function
-                decompilation=LiteLLMAIAPI.fit_decompilation_to_token_max(dec_text)
+                decompilation=LLMAPI.fit_decompilation_to_token_max(dec_text)
                 if self.ai_api.fit_to_tokens else dec_text,
                 # line text for emphasis
                 line_text=line_text,

@@ -27,7 +27,7 @@ class DAILAConfigDialog(QDialog):
         """
         Constructor for the DAILA configuration dialog.
         params: 
-        + config: config object, passed from litellm_api when calling this dialog
+        + config: config object, passed from llm_api when calling this dialog
         """
 
         super().__init__(parent)
@@ -53,7 +53,7 @@ class DAILAConfigDialog(QDialog):
         # LLM Model 
         llm_model = self.DAILAConfig.model
         llm_model_label = QLabel("LLM Model:")
-        llm_model_label.setToolTip("The model to use for LiteLLM.")
+        llm_model_label.setToolTip("The LLM model to use for DAILA.")
 
         # using dropdown for LLM model
         self._llm_model_edit = QComboBox(self)
@@ -67,7 +67,7 @@ class DAILAConfigDialog(QDialog):
 
         api_key = self.DAILAConfig.api_key
         api_key_label = QLabel("API Key:")
-        api_key_label.setToolTip("The API key to use for LiteLLM, for the selected model.")
+        api_key_label.setToolTip("The API key for the selected model.")
         self._api_key_edit = QLineEdit(self)
         self._api_key_edit.setText(api_key)
         self._grid_layout.addWidget(api_key_label, self.row, 0)
@@ -78,7 +78,7 @@ class DAILAConfigDialog(QDialog):
 
         prompt_style = self.DAILAConfig.prompt_style
         prompt_style_label = QLabel("Prompt Style:")
-        prompt_style_label.setToolTip("The prompt style for DAILA to use, refer to dailalib/litellm/prompts for details.")
+        prompt_style_label.setToolTip("The prompt style for DAILA to use, refer to dailalib/llm/prompts for details.")
         
         # using dropdown for prompt style
         self._prompt_style_edit = QComboBox(self)
@@ -92,7 +92,7 @@ class DAILAConfigDialog(QDialog):
 
         custom_endpoint = self.DAILAConfig.custom_endpoint
         custom_endpoint_label = QLabel("Custom OpenAI Endpoint:")
-        custom_endpoint_label.setToolTip("The custom OpenAI endpoint to use for LiteLLM.")
+        custom_endpoint_label.setToolTip("The custom OpenAI-compatible endpoint URL.")
         self._custom_endpoint_edit = QLineEdit(self)
         self._custom_endpoint_edit.setText(custom_endpoint)
         self._grid_layout.addWidget(custom_endpoint_label, self.row, 0)
@@ -103,7 +103,7 @@ class DAILAConfigDialog(QDialog):
 
         custom_model = self.DAILAConfig.custom_model
         custom_model_label = QLabel("Custom OpenAI Model:")
-        custom_model_label.setToolTip("The custom OpenAI model to use for LiteLLM.")
+        custom_model_label.setToolTip("The custom model name for the custom endpoint.")
         self._custom_model_edit = QLineEdit(self)
         self._custom_model_edit.setText(custom_model)
         self._grid_layout.addWidget(custom_model_label, self.row, 0)

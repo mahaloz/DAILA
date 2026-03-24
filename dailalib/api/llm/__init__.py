@@ -36,6 +36,6 @@ LLM_COST = {
 }
 
 # delay import for const creation
-from .litellm_api import LiteLLMAIAPI
+from .llm_api import LLMAPI
 from .prompt_type import PromptType, ALL_STYLES, DEFAULT_STYLE
 

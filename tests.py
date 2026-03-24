@@ -13,7 +13,7 @@ class TestCommandline(unittest.TestCase):
         assert version == dailalib.__version__
 
     def test_resources_exist(self):
-        from dailalib.api.litellm.prompts import PROMPTS
+        from dailalib.api.llm.prompts import PROMPTS
         assert len(PROMPTS) > 0
 
 

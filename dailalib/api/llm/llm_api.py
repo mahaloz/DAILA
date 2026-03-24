@@ -17,8 +17,10 @@ active_custom_endpoint = None
 
 _l = logging.getLogger(__name__)
 
+PERPLEXITY_MODELS = {"sonar", "sonar-pro"}
 
-class LiteLLMAIAPI(AIAPI):
+
+class LLMAPI(AIAPI):
     prompts_by_name = []
 
     def __init__(
@@ -150,7 +152,7 @@ class LiteLLMAIAPI(AIAPI):
             self._custom_model = None
             _l.info(f"Custom model selection cleared, or not in use")
             return
-        self._custom_model = "openai/" + custom_model.strip()
+        self._custom_model = custom_model.strip()
         _l.info(f"Custom model set to {self._custom_model}")
 
     @property
@@ -171,33 +173,62 @@ class LiteLLMAIAPI(AIAPI):
         self._custom_endpoint = custom_endpoint.strip()
         _l.info(f"Custom endpoint set to {self._custom_endpoint}")
 
+    @staticmethod
+    def create_pydantic_model(model_name, api_key=None, custom_endpoint=None):
+        """Create a pydantic_ai model identifier or object from model name and optional custom endpoint."""
+        from pydantic_ai.models.openai import OpenAIModel
+        from pydantic_ai.providers.openai import OpenAIProvider
+
+        if custom_endpoint:
+            provider = OpenAIProvider(base_url=custom_endpoint, api_key=api_key or "dummy")
+            return OpenAIModel(model_name, provider=provider)
+
+        if model_name in OPENAI_MODELS:
+            return f"openai:{model_name}"
+        elif "claude" in model_name:
+            return f"anthropic:{model_name}"
+        elif model_name.startswith("gemini/"):
+            actual = model_name.split("/", 1)[1]
+            return f"google-gla:{actual}"
+        elif model_name.startswith("vertex_ai_beta/"):
+            actual = model_name.split("/", 1)[1]
+            return f"google-vertex:{actual}"
+        elif "sonar" in model_name or "perplexity" in model_name:
+            actual = model_name.split("/", 1)[1] if "/" in model_name else model_name
+            provider = OpenAIProvider(base_url="https://api.perplexity.ai", api_key=api_key)
+            return OpenAIModel(actual, provider=provider)
+        else:
+            return f"openai:{model_name}"
+
     def query_model(
         self,
         prompt: str,
         model: Optional[str] = None,
         max_tokens=None,
     ):
-        # delay import because litellm attempts to query the server on import to collect cost information.
-        from litellm import completion
+        from pydantic_ai import Agent
+        from pydantic_ai.settings import ModelSettings
 
         if not self.api_key and not self.custom_endpoint:
             raise ValueError(f"Model API key is not set. Please set it before querying the model {self.model}")
 
         prompt_model = (model or self.model) if not self.custom_endpoint else self.custom_model
-        response = completion(
-            model=prompt_model,
-            messages=[
-                {"role": "user", "content": prompt}
-            ],
+        pydantic_model = self.create_pydantic_model(
+            prompt_model, api_key=self.api_key, custom_endpoint=self.custom_endpoint
+        )
+
+        model_settings = ModelSettings(
             max_tokens=max_tokens,
             timeout=60 if not self.custom_endpoint else 300,
-            api_base=self.custom_endpoint if self.custom_endpoint else None,  # Use custom endpoint if set
-            api_key=self.api_key if not self.custom_endpoint else "dummy" # In most of cases custom endpoint doesn't need the api_key
         )
+
+        agent = Agent(pydantic_model)
+        result = agent.run_sync(prompt, model_settings=model_settings)
+
         # get the answer
         try:
-            answer = response.choices[0].message.content
-        except (KeyError, IndexError) as e:
+            answer = result.output
+        except Exception:
             answer = None
 
         if self.custom_endpoint:
@@ -205,9 +236,10 @@ class LiteLLMAIAPI(AIAPI):
 
         # get the estimated cost
         try:
-            prompt_tokens = response.usage.prompt_tokens
-            completion_tokens = response.usage.completion_tokens
-        except (KeyError, IndexError) as e:
+            usage = result.usage()
+            prompt_tokens = usage.request_tokens
+            completion_tokens = usage.response_tokens
+        except Exception:
             prompt_tokens, completion_tokens = None, None
         cost = self.llm_cost(prompt_model, prompt_tokens, completion_tokens) \
             if prompt_tokens is not None and completion_tokens is not None else None
@@ -223,13 +255,13 @@ class LiteLLMAIAPI(AIAPI):
 
     @staticmethod
     def content_fits_tokens(content: str, model=DEFAULT_MODEL):
-        max_token_count = LiteLLMAIAPI.MODEL_TO_TOKENS[model]
-        token_count = LiteLLMAIAPI.estimate_token_amount(content, model=model)
+        max_token_count = LLMAPI.MODEL_TO_TOKENS[model]
+        token_count = LLMAPI.estimate_token_amount(content, model=model)
         return token_count <= max_token_count - 1000
 
     @staticmethod
     def fit_decompilation_to_token_max(decompilation: str, delta_step=10, model=DEFAULT_MODEL):
-        if LiteLLMAIAPI.content_fits_tokens(decompilation, model=model):
+        if LLMAPI.content_fits_tokens(decompilation, model=model):
             return decompilation
 
         dec_lines = decompilation.split("\n")
@@ -238,7 +270,7 @@ class LiteLLMAIAPI(AIAPI):
         dec_lines = dec_lines[0:2] + ["// ..."] + dec_lines[delta_step:last_idx-delta_step] + ["// ..."] + dec_lines[-2:-1]
         decompilation = "\n".join(dec_lines)
 
-        return LiteLLMAIAPI.fit_decompilation_to_token_max(decompilation, delta_step=delta_step, model=model)
+        return LLMAPI.fit_decompilation_to_token_max(decompilation, delta_step=delta_step, model=model)
 
     @staticmethod
     def llm_cost(model_name: str, prompt_tokens: int, completion_tokens: int) -> float | None:
@@ -275,7 +307,7 @@ class LiteLLMAIAPI(AIAPI):
     def get_custom_endpoint(self):
         global active_custom_endpoint
         return active_custom_endpoint
-    
+
     #
     # LLM Settings
     #

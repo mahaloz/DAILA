@@ -1,4 +1,4 @@
-from dailalib.api.litellm.prompt_type import PromptType
+from dailalib.api.llm.prompt_type import PromptType
 from .prompt import Prompt
 
 

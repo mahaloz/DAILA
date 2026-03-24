@@ -10,10 +10,10 @@ from PyQt5.QtGui import QFont
 from libbs.artifacts.context import Context
 
 if typing.TYPE_CHECKING:
-    from ..api.litellm.litellm_api import LiteLLMAIAPI
+    from ..api.llm.llm_api import LLMAPI
 
 CONTEXT_PROMPT = """
-You are reverse engineering assistant that helps to understand binaries in a decompiler. Given decompilation 
+You are reverse engineering assistant that helps to understand binaries in a decompiler. Given decompilation
 and questions you answer them to the best of your ability. Here is the function you are currently working on:
 ```
 DEC_TEXT
@@ -25,7 +25,7 @@ Acknowledging the context, by responding with:
 
 
 class LLMChatClient(QWidget):
-    def __init__(self, ai_api: "LiteLLMAIAPI", parent=None, context: Context = None):
+    def __init__(self, ai_api: "LLMAPI", parent=None, context: Context = None):
         super(LLMChatClient, self).__init__(parent)
         self.model = ai_api.get_model()
         self.custom_endpoint = ai_api.get_custom_endpoint()
@@ -64,8 +64,9 @@ class LLMChatClient(QWidget):
         self.layout.addWidget(self.chat_area)
         self.layout.addLayout(self.input_layout)
 
-        # Chat history
-        self.chat_history = []
+        # Chat state
+        self.system_prompt = None
+        self.pydantic_history = []  # pydantic_ai message history
         self.thread = None
 
         # model check
@@ -85,13 +86,31 @@ class LLMChatClient(QWidget):
                 # put a number in front of each line
                 dec_lines = dec_text.split("\n")
                 dec_text = "\n".join([f"{i + 1} {line}" for i, line in enumerate(dec_lines)])
-                prompt = CONTEXT_PROMPT.replace("DEC_TEXT", dec_text)
-                # set the text to the prompt
-                self.input_text.setText(prompt)
-                self.send_message(add_text=False, role="system")
+                self.system_prompt = CONTEXT_PROMPT.replace("DEC_TEXT", dec_text)
+                self._start_initial_conversation()
         else:
-            self.input_text.setText("You are an assistant that helps understand code. Start the conversation by simply saying 'Hello, how can I help you?'.")
-            self.send_message(add_text=False, role="system")
+            self.system_prompt = "You are an assistant that helps understand code."
+            self._start_initial_conversation()
+
+    def _start_initial_conversation(self):
+        """Send an initial message to get the LLM's greeting response."""
+        self.input_text.setDisabled(True)
+        self.send_button.setDisabled(True)
+
+        self.thread = LLMThread(
+            user_message="Hello",
+            model_name=self.model,
+            system_prompt=self.system_prompt,
+            message_history=[],
+            custom_endpoint=self.custom_endpoint,
+            api_key=self.ai_api.api_key,
+        )
+        self.thread.response_received.connect(lambda msg: self.receive_message(msg))
+        self.thread.history_updated.connect(lambda h: self._on_history_updated(h))
+        self.thread.start()
+
+    def _on_history_updated(self, history):
+        self.pydantic_history = history
 
     def add_message(self, text, is_user):
         # Message bubble
@@ -135,7 +154,7 @@ class LLMChatClient(QWidget):
         if not user_text:
             return
 
-        # do aiapi calback
+        # do aiapi callback
         if self.ai_api:
             send_callback = self.ai_api.chat_event_callbacks.get("send", None)
             if send_callback:
@@ -146,32 +165,32 @@ class LLMChatClient(QWidget):
             self.add_message(user_text, is_user=True)
         self.input_text.clear()
 
-        # Append to chat history
-        self.chat_history.append({"role": role, "content": user_text})
-
         # Disable input while waiting for response
         self.input_text.setDisabled(True)
         self.send_button.setDisabled(True)
 
         # Start a thread to get the response
         self.thread = LLMThread(
-            self.chat_history, self.model, custom_endpoint=self.custom_endpoint, api_key=self.ai_api.api_key
+            user_message=user_text,
+            model_name=self.model,
+            system_prompt=self.system_prompt,
+            message_history=self.pydantic_history,
+            custom_endpoint=self.custom_endpoint,
+            api_key=self.ai_api.api_key,
         )
         self.thread.response_received.connect(lambda msg: self.receive_message(msg))
+        self.thread.history_updated.connect(lambda h: self._on_history_updated(h))
         self.thread.start()
 
     def receive_message(self, assistant_message):
         # Display assistant message
         self.add_message(assistant_message, is_user=False)
 
-        # do aiapi calback
+        # do aiapi callback
         if self.ai_api:
             recv_callback = self.ai_api.chat_event_callbacks.get("receive", None)
             if recv_callback:
                 recv_callback(assistant_message, model=self.model)
-
-        # Append to chat history
-        self.chat_history.append({"role": "user", "content": assistant_message})
 
         # Re-enable input
         self.input_text.setDisabled(False)
@@ -179,38 +198,53 @@ class LLMChatClient(QWidget):
 
     def closeEvent(self, event):
         # Ensure that the thread is properly terminated when the window is closed
-        if hasattr(self, 'thread') and self.thread.isRunning():
+        if hasattr(self, 'thread') and self.thread is not None and self.thread.isRunning():
             self.thread.terminate()
         event.accept()
 
 
 class LLMThread(QThread):
     response_received = pyqtSignal(str)
+    history_updated = pyqtSignal(list)
 
-    def __init__(self, chat_history, model_name, custom_endpoint=None, api_key=None):
+    def __init__(self, user_message, model_name, system_prompt=None,
+                 message_history=None, custom_endpoint=None, api_key=None):
         super().__init__()
-        self.chat_history = chat_history.copy()
+        self.user_message = user_message
         self.model_name = model_name
+        self.system_prompt = system_prompt
+        self.message_history = message_history or []
         self.custom_endpoint = custom_endpoint
         self.api_key = api_key
 
     def run(self):
-        import litellm
+        from pydantic_ai import Agent
+        from pydantic_ai.settings import ModelSettings
+        from dailalib.api.llm.llm_api import LLMAPI
 
-        # must set modify_params to True to deal with Claude
-        litellm.modify_params = True
-        response = litellm.completion(
-            model=self.model_name,
-            messages=self.chat_history,
-            timeout=60 if not self.custom_endpoint else 300,
-            api_base=self.custom_endpoint if self.custom_endpoint else None,  # Use custom endpoint if set
-            api_key=self.api_key if not self.custom_endpoint else "dummy" # In most of cases custom endpoint doesn't need the api_key
+        pydantic_model = LLMAPI.create_pydantic_model(
+            self.model_name, api_key=self.api_key, custom_endpoint=self.custom_endpoint
         )
-        litellm.modify_params = False
+
+        agent = Agent(
+            pydantic_model,
+            system_prompt=self.system_prompt or "",
+        )
+
+        model_settings = ModelSettings(
+            timeout=60 if not self.custom_endpoint else 300,
+        )
 
         try:
-            answer = response.choices[0].message.content
-        except (KeyError, IndexError) as e:
+            result = agent.run_sync(
+                self.user_message,
+                message_history=self.message_history,
+                model_settings=model_settings,
+            )
+            answer = result.output
+            self.history_updated.emit(result.all_messages())
+        except Exception as e:
             answer = f"Error: {e}. Please close the window and try again."
+            self.history_updated.emit(self.message_history)
 
         self.response_received.emit(answer)
