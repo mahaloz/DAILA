@@ -5,7 +5,7 @@ from dailalib.configuration import DAILAConfig
 from .prompt_type import ALL_STYLES
 from . import MODEL_TO_TOKENS
 
-from libbs.ui.qt_objects import (
+from declib.ui.qt_objects import (
     QDialog,
     QGridLayout,
     QHBoxLayout,

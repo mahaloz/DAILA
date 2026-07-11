@@ -1,7 +1,7 @@
 import textwrap
 from pathlib import Path
 
-from libbs.plugin_installer import LibBSPluginInstaller
+from declib.plugin_installer import DecLibPluginInstaller
 
 VARBERT_AVAILABLE = True
 try:
@@ -10,7 +10,7 @@ except ImportError:
     VARBERT_AVAILABLE = False
 
 
-class DAILAInstaller(LibBSPluginInstaller):
+class DAILAInstaller(DecLibPluginInstaller):
     def __init__(self):
         super().__init__()
         self.pkg_path = self.find_pkg_files("dailalib")

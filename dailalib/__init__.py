@@ -6,7 +6,7 @@ from dailalib.llm_chat import get_llm_chat_creator
 
 
 def create_plugin(*args, **kwargs):
-    from libbs.api import DecompilerInterface
+    from declib.api import DecompilerInterface
     #
     # LLM API (through pydantic_ai)
     #

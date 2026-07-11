@@ -8,7 +8,7 @@ from ...ai_api import AIAPI
 from ..llm_api import LLMAPI
 from dailalib.api.llm.prompt_type import PromptType
 
-from libbs.artifacts import Comment, Function, Context
+from declib.artifacts import Comment, Function, Context
 from jinja2 import Template, StrictUndefined
 
 JSON_REGEX = re.compile(r"\{.*?}", flags=re.DOTALL)

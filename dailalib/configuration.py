@@ -1,4 +1,4 @@
-from libbs.configuration import DLConfig
+from declib.configuration import DLConfig
 from typing import Optional, Dict
 from platformdirs import user_config_dir
 import logging 

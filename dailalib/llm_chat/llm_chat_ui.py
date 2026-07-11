@@ -1,7 +1,7 @@
 import typing
 
-from libbs.ui.version import ui_version
-from libbs.ui.qt_objects import (
+from declib.ui.version import ui_version
+from declib.ui.qt_objects import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QLabel, QScrollArea, QFrame,
     Qt, QThread, Signal, QFont,
@@ -12,7 +12,7 @@ if ui_version == "PySide6":
 else:
     from PyQt5.QtWidgets import QTextEdit
 
-from libbs.artifacts.context import Context
+from declib.artifacts.context import Context
 
 if typing.TYPE_CHECKING:
     from ..api.llm.llm_api import LLMAPI

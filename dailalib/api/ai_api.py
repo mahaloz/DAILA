@@ -2,7 +2,7 @@ from typing import Optional
 from functools import wraps
 import threading
 
-from libbs.api import DecompilerInterface
+from declib.api import DecompilerInterface
 
 
 class AIAPI:

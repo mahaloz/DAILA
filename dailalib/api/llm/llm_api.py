@@ -5,7 +5,7 @@ import logging
 
 import tiktoken
 
-from libbs.decompilers import GHIDRA_DECOMPILER
+from declib.decompilers import GHIDRA_DECOMPILER
 
 from . import DEFAULT_MODEL, LLM_COST, OPENAI_MODELS
 from ..ai_api import AIAPI
@@ -333,9 +333,9 @@ class LLMAPI(AIAPI):
     @staticmethod
     def open_config_dialog(config: DAILAConfig, make_app=False, qt_version: str = "PySide6") -> DAILAConfig:
         # delay import to configure the qt for the right platform
-        from libbs.ui.version import set_ui_version
+        from declib.ui.version import set_ui_version
         set_ui_version(qt_version)
-        from libbs.ui.qt_objects import QApplication
+        from declib.ui.qt_objects import QApplication
         from .config_dialog import DAILAConfigDialog
 
         if make_app:

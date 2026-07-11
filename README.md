@@ -13,7 +13,7 @@ If you are looking for the paper repo, find it [here](https://github.com/mahaloz
 
 
 ## Supported Decompilers and AI Systems
-DAILA interacts with the decompiler abstractly through the [LibBS](https://github.com/binsync/libbs) library.
+DAILA interacts with the decompiler abstractly through the [DecLib](https://github.com/binsync/declib) library.
 This allows DAILA to support the following decompilers:
 - IDA Pro: **>= 8.4**
 - Ghidra: **>= 12.0**
@@ -80,7 +80,7 @@ Here is an example using the OpenAI API:
 
 ```python
 from dailalib import LiteLLMAIAPI
-from libbs.api import DecompilerInterface
+from declib.api import DecompilerInterface
 
 deci = DecompilerInterface.discover()
 ai_api = LiteLLMAIAPI(decompiler_interface=deci)

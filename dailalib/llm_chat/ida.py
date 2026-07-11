@@ -2,10 +2,10 @@ import logging
 
 import idaapi
 
-from libbs.decompilers.ida.compat import get_ida_gui_version
-from libbs.ui.version import set_ui_version
+from declib.decompilers.ida.compat import get_ida_gui_version
+from declib.ui.version import set_ui_version
 set_ui_version(get_ida_gui_version())
-from libbs.ui.qt_objects import QWidget, QVBoxLayout, wrapInstance
+from declib.ui.qt_objects import QWidget, QVBoxLayout, wrapInstance
 
 from dailalib.llm_chat.llm_chat_ui import LLMChatClient
 

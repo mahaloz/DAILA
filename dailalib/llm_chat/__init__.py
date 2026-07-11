@@ -1,7 +1,7 @@
 import logging
 
-from libbs.api import DecompilerInterface
-from libbs.decompilers import IDA_DECOMPILER, ANGR_DECOMPILER, BINJA_DECOMPILER, GHIDRA_DECOMPILER
+from declib.api import DecompilerInterface
+from declib.decompilers import IDA_DECOMPILER, ANGR_DECOMPILER, BINJA_DECOMPILER, GHIDRA_DECOMPILER
 
 from ..api import AIAPI
 
