@@ -1,4 +1,4 @@
-from libbs.configuration import BSConfig
+from libbs.configuration import DLConfig
 from typing import Optional, Dict
 from platformdirs import user_config_dir
 import logging 
@@ -6,7 +6,7 @@ import logging
 _l = logging.getLogger(__name__)
 
 
-class DAILAConfig(BSConfig):
+class DAILAConfig(DLConfig):
     """
     Configuration class for LLM API, model, prompt style, and probably other things in the future.
     """
