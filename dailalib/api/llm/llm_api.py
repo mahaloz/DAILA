@@ -74,6 +74,11 @@ class LLMAPI(AIAPI):
         active_prompt_style = self.prompt_style
         active_custom_endpoint = self.custom_endpoint
 
+    def close_codex_backend(self):
+        if self._codex_backend is not None:
+            self._codex_backend.close()
+            self._codex_backend = None
+
     def load_or_create_config(self, new_config=None) -> bool:
         if new_config:
             self.config = new_config
@@ -84,6 +89,10 @@ class LLMAPI(AIAPI):
 
         # load the config
         self.config.load()
+        
+        if self.model == "codex" and self.config.model != "codex":
+            self.close_codex_backend()
+
         self.model = self.config.model
         self.api_key = self.config.api_key
         self.prompt_style = self.config.prompt_style

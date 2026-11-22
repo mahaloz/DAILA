@@ -11,6 +11,7 @@ import queue
 import subprocess
 import sys
 import threading
+import atexit
 from typing import Optional
 
 
@@ -43,6 +44,7 @@ class CodexBackend:
         except Exception:
             self.close()
             raise
+        atexit.register(self.close)
 
     def _read_messages(self):
         try:
@@ -137,20 +139,26 @@ class CodexBackend:
                     self._reject_server_request(message)
 
     def close(self):
-        if self._closed:
-            return
-        self._closed = True
-        if self._proc.poll() is None:
-            self._proc.terminate()
-            try:
-                self._proc.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                self._proc.kill()
-                self._proc.wait()
-        if self._proc.stdin is not None:
-            self._proc.stdin.close()
-        if self._proc.stdout is not None:
-            self._proc.stdout.close()
+        with self._lock:
+            if self._closed:
+                return
+            
+            self._closed = True
+            atexit.unregister(self.close)
+
+            if self._proc.poll() is None:
+                self._proc.terminate()
+                try:
+                    self._proc.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    self._proc.kill()
+                    self._proc.wait()
+            
+            if self._proc.stdin is not None:
+                self._proc.stdin.close()
+            
+            if self._proc.stdout is not None:
+                self._proc.stdout.close()
 
     def __enter__(self):
         return self
