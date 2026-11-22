@@ -8,6 +8,7 @@ MODEL_TO_TOKENS = {
     "gpt-4o": 8_000,
     "gpt-4o-mini": 16_000,
     "gpt-4-turbo": 128_000,
+    "codex": 128_000,  # Codex App Server backend
     "claude-3-5-sonnet-20240620": 200_000,
     "gemini/gemini-2.0-flash": 1_000_000,
     "vertex_ai_beta/gemini-2.0-flash": 1_000_000,

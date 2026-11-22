@@ -10,6 +10,7 @@ from declib.decompilers import GHIDRA_DECOMPILER
 from . import DEFAULT_MODEL, LLM_COST, OPENAI_MODELS
 from ..ai_api import AIAPI
 from dailalib.configuration import DAILAConfig
+from .codex_backend import CodexBackend
 
 active_model = None
 active_prompt_style = None
@@ -43,12 +44,13 @@ class LLMAPI(AIAPI):
         # default values
         self._api_key = None
         self.model = model
+        self._codex_backend = None
         # default to openai api key if not provided
         if api_key or os.getenv("OPENAI_API_KEY"):
             self.api_key = api_key or os.getenv("OPENAI_API_KEY")
         elif not self._use_config:
             self.api_key = None
-
+        
         self.prompt_style = prompt_style
         self.fit_to_tokens = fit_to_tokens
         self.chat_use_ctx = chat_use_ctx
@@ -208,6 +210,12 @@ class LLMAPI(AIAPI):
     ):
         from pydantic_ai import Agent
         from pydantic_ai.settings import ModelSettings
+        
+        if self.model == "codex":
+            if self._codex_backend is None:
+                self._codex_backend = CodexBackend()
+            
+            return self._codex_backend.query_model(prompt)
 
         if not self.api_key and not self.custom_endpoint:
             raise ValueError(f"Model API key is not set. Please set it before querying the model {self.model}")
