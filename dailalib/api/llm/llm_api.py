@@ -127,6 +127,10 @@ class LLMAPI(AIAPI):
 
     @api_key.setter
     def api_key(self, value):
+        if self.model == "codex":
+            self._api_key = None
+            return
+
         self._api_key = value
         _l.info(f"API key set to {self.model}")
         if self._api_key and self.model is not None:
